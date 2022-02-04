@@ -1,6 +1,6 @@
-Data,Ativo,Quantidade,Valor,Taxa de Liquidação,Emolumentos,Total,Trade,Short,Bonificação,Lucro,Observação
-14/03/2019,-,0,"R$ 0,00","R$ 0,00","R$ 0,00","R$ 0,00",,,,,
-24/04/2019,ITUB3,3,"R$ 29,39","R$ 0,00","R$ 0,00","R$ 88,17",Sim,,,,
-06/05/2019,LREN3,1,"R$ 14,44","R$ 0,00","R$ 0,00","R$ 14,44",,,Sim,,
-04/07/2019,BIDI11,40,"R$ 0,00","R$ 0,00","R$ 0,00","R$ 0,00",,,,,Desdobramento BIDI4 1 -> 6
-10/09/2019,MGLU3,3,"R$ 31,90","R$ 0,05","R$ 0,00","R$ 95,75",,,,,
+Data;Ativo;Quantidade;Valor;Taxa de Liquidação;Emolumentos;Total;Trade;Short;Bonificação;Lucro;Observação
+14/03/2019;-;0;"R$ 0,00";"R$ 0,00";"R$ 0,00";"R$ 0,00";;;;;
+24/04/2019;ITUB3;3;"R$ 29,39";"R$ 0,00";"R$ 0,00";"R$ 88,17";Sim;;;;
+06/05/2019;LREN3;1;"R$ 14,44";"R$ 0,00";"R$ 0,00";"R$ 14,44";;;Sim;;
+04/07/2019;BIDI11;40;"R$ 0,00";"R$ 0,00";"R$ 0,00";"R$ 0,00";;;;;Desdobramento BIDI4 1 -> 6
+10/09/2019;MGLU3;3;"R$ 31,90";"R$ 0,05";"R$ 0,00";"R$ 95,75";;;;;
