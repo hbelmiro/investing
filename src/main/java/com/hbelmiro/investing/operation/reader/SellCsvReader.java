@@ -7,7 +7,10 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @ApplicationScoped
-final class BuyCsvReader extends CsvReader {
+final class SellCsvReader extends CsvReader {
+
+    @ConfigProperty(name = "operation.reader.csv.sell.path")
+    String path;
 
     /**
      * Dummy constructor for CDI only.
@@ -16,12 +19,12 @@ final class BuyCsvReader extends CsvReader {
      */
     @SuppressWarnings("unused")
     @Deprecated(forRemoval = true)
-    private BuyCsvReader() {
+    private SellCsvReader() {
         super(null, null);
     }
 
     @Inject
-    BuyCsvReader(@ConfigProperty(name = "operation.reader.csv.buy.path") String path) {
-        super(path, OperationType.BUY);
+    SellCsvReader(@ConfigProperty(name = "operation.reader.csv.sell.path") String path) {
+        super(path, OperationType.SELL);
     }
 }
