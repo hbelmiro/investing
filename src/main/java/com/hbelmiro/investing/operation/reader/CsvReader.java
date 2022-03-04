@@ -57,6 +57,14 @@ abstract class CsvReader {
         var price = new BigDecimal(splitLine[3].replace("\"", "").replace(",", ".").replace(CURRENCY_SYMBOL_PREFIX, ""));
         var tax1 = new BigDecimal(splitLine[4].replace("\"", "").replace(",", ".").replace(CURRENCY_SYMBOL_PREFIX, ""));
         var tax2 = new BigDecimal(splitLine[5].replace("\"", "").replace(",", ".").replace(CURRENCY_SYMBOL_PREFIX, ""));
-        return new Operation(date, stock, amount, price, tax1.add(tax2), operationType);
+
+        return Operation.builder()
+                        .date(date)
+                        .stock(stock)
+                        .amount(amount)
+                        .price(price)
+                        .tax(tax1.add(tax2))
+                        .type(operationType)
+                        .build();
     }
 }

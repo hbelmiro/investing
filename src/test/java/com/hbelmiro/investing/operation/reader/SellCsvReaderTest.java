@@ -25,10 +25,38 @@ class SellCsvReaderTest {
 
     private static Operation[] expectedOperations() {
         return new Operation[]{
-                new Operation(LocalDate.of(2019, 8, 27), new Stock("BIDI11"), BigDecimal.valueOf(8), BigDecimal.valueOf(57.99), BigDecimal.valueOf(0.17), OperationType.SELL),
-                new Operation(LocalDate.of(2019, 9, 10), new Stock("ITUB3"), BigDecimal.valueOf(5), BigDecimal.valueOf(23.04), BigDecimal.ZERO, OperationType.SELL),
-                new Operation(LocalDate.of(2019, 9, 12), new Stock("LREN3"), BigDecimal.valueOf(6), BigDecimal.valueOf(23.97), BigDecimal.valueOf(0.15), OperationType.SELL),
-                new Operation(LocalDate.of(2019, 9, 12), new Stock("MGLU3"), BigDecimal.valueOf(23), BigDecimal.valueOf(8.35), BigDecimal.valueOf(0.02), OperationType.SELL),
+                Operation.builder()
+                         .date(LocalDate.of(2019, 8, 27))
+                         .stock(new Stock("BIDI11"))
+                         .amount(BigDecimal.valueOf(8))
+                         .price(BigDecimal.valueOf(57.99))
+                         .tax(BigDecimal.valueOf(0.17))
+                         .type(OperationType.SELL)
+                        .build(),
+                Operation.builder()
+                         .date(LocalDate.of(2019, 9, 10))
+                         .stock(new Stock("ITUB3"))
+                         .amount(BigDecimal.valueOf(5))
+                         .price(BigDecimal.valueOf(23.04))
+                         .tax(BigDecimal.ZERO)
+                         .type(OperationType.SELL)
+                        .build(),
+                Operation.builder()
+                         .date(LocalDate.of(2019, 9, 12))
+                         .stock(new Stock("LREN3"))
+                         .amount(BigDecimal.valueOf(6))
+                         .price(BigDecimal.valueOf(23.97))
+                         .tax(BigDecimal.valueOf(0.15))
+                         .type(OperationType.SELL)
+                        .build(),
+                Operation.builder()
+                         .date(LocalDate.of(2019, 9, 12))
+                         .stock(new Stock("MGLU3"))
+                         .amount(BigDecimal.valueOf(23))
+                         .price(BigDecimal.valueOf(8.35))
+                         .tax(BigDecimal.valueOf(0.02))
+                         .type(OperationType.SELL)
+                        .build()
         };
     }
 
