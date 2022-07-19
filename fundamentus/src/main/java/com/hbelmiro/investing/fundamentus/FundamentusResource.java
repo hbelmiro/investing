@@ -29,6 +29,7 @@ public class FundamentusResource {
             "LREN3",
             "MDIA3",
             "BIDI11",
+            "INBR31",
             "BBDC3",
             "BBAS3",
             "BRSR6",
