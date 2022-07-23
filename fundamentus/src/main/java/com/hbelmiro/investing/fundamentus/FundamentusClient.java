@@ -27,9 +27,17 @@ public class FundamentusClient {
         Element lpaSpan = spans.stream().filter(e -> "LPA".equals(e.html())).findAny().orElseThrow();
         String lpaString = lpaSpan.parent().nextElementSibling().getElementsByClass("txt").html();
 
+        Element netWorthSpan = spans.stream().filter(e -> "Patrim. Líq".equals(e.html())).findAny().orElseThrow();
+        String netWorthString = netWorthSpan.parent().nextElementSibling().getElementsByClass("txt").html();
+
+        Element sharesSpan = spans.stream().filter(e -> "Nro. Ações".equals(e.html())).findAny().orElseThrow();
+        String sharesString = sharesSpan.parent().nextElementSibling().getElementsByClass("txt").html();
+
         BigDecimal dy = new BigDecimal(dyString.replace(',', '.').replace("%", "")).divide(new BigDecimal("100"));
         BigDecimal lpa = new BigDecimal(lpaString.replace(".", "").replace(',', '.'));
+        BigDecimal netWorth = new BigDecimal(netWorthString.replace(".", "").replace(',', '.'));
+        BigDecimal shares = new BigDecimal(sharesString.replace(".", "").replace(',', '.'));
 
-        return new Indicators(dy, lpa);
+        return new Indicators(dy, lpa, netWorth, shares);
     }
 }

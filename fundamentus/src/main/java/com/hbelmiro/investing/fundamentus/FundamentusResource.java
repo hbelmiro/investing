@@ -38,7 +38,9 @@ public class FundamentusResource {
             "PSSA3",
             "ODPV3",
             "XPBR31",
-            "ARZZ3"
+            "ARZZ3",
+            "HYPE3",
+            "BBSE3"
     );
 
     private final FundamentusClient fundamentusClient;
@@ -71,12 +73,30 @@ public class FundamentusResource {
                             .map(indicators -> indicators.map(Indicators::dividendYield).map(currencyFormatter::format).orElse("Error"))
                             .collect(Collectors.joining(System.lineSeparator()));
 
+        String netWorth = map.values().stream()
+                             .map(indicators -> indicators.map(Indicators::netWorth).map(currencyFormatter::format).orElse("Error"))
+                             .collect(Collectors.joining(System.lineSeparator()));
+
+        String shares = map.values().stream()
+                                  .map(indicators -> indicators.map(Indicators::shares).map(currencyFormatter::format).orElse("Error"))
+                                  .collect(Collectors.joining(System.lineSeparator()));
+
         return """
                 LPA
                 ===
                 """ + lpa + """
-                  
-                                
+                
+                
+                Patrimônio Líquido
+                ==================
+                """ + netWorth + """
+                               
+                               
+                NÚmero Ações
+                ============
+                """ + shares + """
+                               
+                               
                 DY
                 ==
                 """ + dy;
