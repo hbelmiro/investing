@@ -39,7 +39,9 @@ public class FundamentusResource {
             "XPBR31",
             "ARZZ3",
             "HYPE3",
-            "BBSE3"
+            "BBSE3",
+            "VIVT3",
+            "SAPR3"
     );
 
     private final FundamentusClient fundamentusClient;
