@@ -41,7 +41,9 @@ public class FundamentusResource {
             "HYPE3",
             "BBSE3",
             "VIVT3",
-            "SAPR3"
+            "SAPR3",
+            "ABCB4",
+            "KLBN3"
     );
 
     private final FundamentusClient fundamentusClient;
