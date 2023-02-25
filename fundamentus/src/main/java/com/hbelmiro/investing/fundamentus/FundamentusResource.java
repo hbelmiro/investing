@@ -48,9 +48,12 @@ public class FundamentusResource {
 
     private final FundamentusClient fundamentusClient;
 
+    private final StatusInvestClient statusInvestClient;
+
     @Inject
-    public FundamentusResource(FundamentusClient fundamentusClient) {
+    public FundamentusResource(FundamentusClient fundamentusClient, StatusInvestClient statusInvestClient) {
         this.fundamentusClient = fundamentusClient;
+        this.statusInvestClient = statusInvestClient;
     }
 
     @GET
@@ -61,7 +64,7 @@ public class FundamentusResource {
         tickers.forEach(ticker -> {
             Optional<Indicators> indicators;
             try {
-                indicators = Optional.of(fundamentusClient.read(ticker));
+                indicators = Optional.of(statusInvestClient.read(ticker));
             } catch (Exception e) {
                 indicators = Optional.empty();
             }
