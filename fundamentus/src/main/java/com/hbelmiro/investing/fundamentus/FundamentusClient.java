@@ -1,11 +1,11 @@
 package com.hbelmiro.investing.fundamentus;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
