@@ -3,8 +3,8 @@ package com.hbelmiro.investing.operation.reader;
 import com.hbelmiro.investing.OperationType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 final class BuyCsvReader extends CsvReader {
