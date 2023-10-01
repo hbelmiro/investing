@@ -1,4 +1,4 @@
-package com.hbelmiro.investing.fundamentus;
+package com.hbelmiro.investing;
 
 import java.math.BigDecimal;
 
