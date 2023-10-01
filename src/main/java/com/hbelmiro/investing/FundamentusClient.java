@@ -1,4 +1,4 @@
-package com.hbelmiro.investing.fundamentus;
+package com.hbelmiro.investing;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jsoup.Jsoup;

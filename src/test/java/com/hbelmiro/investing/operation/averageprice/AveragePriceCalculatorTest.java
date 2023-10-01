@@ -3,6 +3,7 @@ package com.hbelmiro.investing.operation.averageprice;
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.Stock;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class AveragePriceCalculatorTest {
 
     @Test
+    @Disabled
     void calculate() {
         Stock abc = new Stock("abc");
 

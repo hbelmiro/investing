@@ -1,5 +1,7 @@
-package com.hbelmiro.investing.fundamentus;
+package com.hbelmiro.investing.api;
 
+import com.hbelmiro.investing.FundamentusClient;
+import com.hbelmiro.investing.Indicators;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
