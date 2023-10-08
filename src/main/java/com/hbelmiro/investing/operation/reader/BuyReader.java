@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @ApplicationScoped
-final class BuyGoogleSheetsReader {
+final class BuyReader {
 
     private static final String PAGE = "Compras Ações BR";
 
@@ -23,14 +23,14 @@ final class BuyGoogleSheetsReader {
 
     private final GoogleSheetsClient googleSheetsClient;
 
-    BuyGoogleSheetsReader(GoogleSheetsClient googleSheetsClient) {
+    BuyReader(GoogleSheetsClient googleSheetsClient) {
         this.googleSheetsClient = googleSheetsClient;
     }
 
     List<Operation> read() throws GeneralSecurityException {
         try {
             return googleSheetsClient.read(PAGE, RANGE).stream()
-                    .map(BuyGoogleSheetsReader::toOperation)
+                    .map(BuyReader::toOperation)
                     .toList();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

@@ -26,7 +26,7 @@ class CsvGoogleSheetsClient implements GoogleSheetsClient {
                 if (inputStream != null) {
                     return Arrays.stream(new String(inputStream.readAllBytes()).split(System.lineSeparator()))
                             .map(row -> {
-                                String[] splitValues = row.split(",");
+                                String[] splitValues = row.split(";");
                                 return Arrays.stream(splitValues)
                                         .map(CsvGoogleSheetsClient::removeQuotes)
                                         .map(Object.class::cast)
