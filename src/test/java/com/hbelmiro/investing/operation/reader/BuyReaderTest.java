@@ -9,6 +9,6 @@ class BuyReaderTest extends OperationReaderTest {
 
     @Inject
     BuyReaderTest(BuyReader reader, CsvGoogleSheetsClient googleSheetsClient) {
-        super(reader, googleSheetsClient, OperationType.BUY);
+        super(reader, googleSheetsClient, OperationType.BUY, BuyReader.CURRENCY_UNIT);
     }
 }

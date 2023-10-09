@@ -3,8 +3,10 @@ package com.hbelmiro.investing.operation.reader;
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.Stock;
+import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.Test;
 
+import javax.money.CurrencyUnit;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
@@ -21,10 +23,13 @@ abstract class OperationReaderTest {
 
     private final OperationType operationType;
 
-    protected OperationReaderTest(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType) {
+    private final CurrencyUnit currencyUnit;
+
+    protected OperationReaderTest(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType, CurrencyUnit currencyUnit) {
         this.reader = reader;
         this.googleSheetsClient = googleSheetsClient;
         this.operationType = operationType;
+        this.currencyUnit = currencyUnit;
     }
 
     @Test
@@ -39,8 +44,8 @@ abstract class OperationReaderTest {
                 .date(LocalDate.parse("15/03/2019", dateTimeFormatter))
                 .stock(new Stock("ITUB3"))
                 .amount(BigDecimal.valueOf(3))
-                .price(new BigDecimal("32.26"))
-                .tax(new BigDecimal("0.06"))
+                .price(Money.of(32.26, currencyUnit))
+                .tax(Money.of(0.06, currencyUnit))
                 .build();
 
         Operation op2 = Operation.builder()
@@ -48,8 +53,8 @@ abstract class OperationReaderTest {
                 .date(LocalDate.parse("21/03/2019", dateTimeFormatter))
                 .stock(new Stock("MDIA3"))
                 .amount(BigDecimal.valueOf(-2))
-                .price(new BigDecimal("43.90"))
-                .tax(new BigDecimal("0.00"))
+                .price(Money.of(43.90, currencyUnit))
+                .tax(Money.of(0.00, currencyUnit))
                 .build();
 
         Operation op3 = Operation.builder()
@@ -57,8 +62,8 @@ abstract class OperationReaderTest {
                 .date(LocalDate.parse("21/03/2019", dateTimeFormatter))
                 .stock(new Stock("WEGE3"))
                 .amount(BigDecimal.valueOf(7))
-                .price(new BigDecimal("18.55"))
-                .tax(new BigDecimal("0.00"))
+                .price(Money.of(18.55, currencyUnit))
+                .tax(Money.of(0.00, currencyUnit))
                 .build();
 
         assertThat(operations)
