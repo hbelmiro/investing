@@ -1,5 +1,7 @@
 package com.hbelmiro.investing;
 
+import org.javamoney.moneta.Money;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -9,8 +11,8 @@ public final class Operation {
     private final LocalDate date;
     private final Stock stock;
     private final BigDecimal amount;
-    private final BigDecimal price;
-    private final BigDecimal tax;
+    private final Money price;
+    private final Money tax;
     private final OperationType type;
 
     private Operation(Builder builder) {
@@ -58,11 +60,11 @@ public final class Operation {
         return amount;
     }
 
-    public BigDecimal getPrice() {
+    public Money getPrice() {
         return price;
     }
 
-    public BigDecimal getTax() {
+    public Money getTax() {
         return tax;
     }
 
@@ -89,8 +91,8 @@ public final class Operation {
         private LocalDate date;
         private Stock stock;
         private BigDecimal amount;
-        private BigDecimal price;
-        private BigDecimal tax;
+        private Money price;
+        private Money tax;
         private OperationType type;
 
         private Builder() {
@@ -111,12 +113,12 @@ public final class Operation {
             return this;
         }
 
-        public Builder price(BigDecimal price) {
+        public Builder price(Money price) {
             this.price = price;
             return this;
         }
 
-        public Builder tax(BigDecimal tax) {
+        public Builder tax(Money tax) {
             this.tax = tax;
             return this;
         }

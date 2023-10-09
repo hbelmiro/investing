@@ -4,7 +4,9 @@ import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.Stock;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import org.javamoney.moneta.Money;
 
+import javax.money.CurrencyUnit;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
@@ -23,17 +25,21 @@ abstract class OperationReader {
 
     private final OperationType operationType;
 
+    private final CurrencyUnit currencyUnit;
+
     protected OperationReader() {
         // Needed for CDI
         page = null;
         googleSheetsClient = null;
         operationType = null;
+        currencyUnit = null;
     }
 
-    OperationReader(String page, GoogleSheetsClient googleSheetsClient, OperationType operationType) {
+    OperationReader(String page, GoogleSheetsClient googleSheetsClient, OperationType operationType, CurrencyUnit currencyUnit) {
         this.page = page;
         this.googleSheetsClient = googleSheetsClient;
         this.operationType = operationType;
+        this.currencyUnit = currencyUnit;
     }
 
     List<Operation> read() throws GeneralSecurityException {
@@ -57,7 +63,8 @@ abstract class OperationReader {
                 .build();
     }
 
-    private static BigDecimal toMoney(String value) {
-        return new BigDecimal(value.replace("R$ ", "").replace(".", "").replace(",", "."));
+    private Money toMoney(String value) {
+        var bigDecimal = new BigDecimal(value.replace("R$ ", "").replace(".", "").replace(",", "."));
+        return Money.of(bigDecimal, currencyUnit);
     }
 }
