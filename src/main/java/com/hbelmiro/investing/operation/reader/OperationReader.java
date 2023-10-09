@@ -23,6 +23,13 @@ abstract class OperationReader {
 
     private final OperationType operationType;
 
+    protected OperationReader() {
+        // Needed for CDI
+        page = null;
+        googleSheetsClient = null;
+        operationType = null;
+    }
+
     OperationReader(String page, GoogleSheetsClient googleSheetsClient, OperationType operationType) {
         this.page = page;
         this.googleSheetsClient = googleSheetsClient;
