@@ -5,10 +5,10 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-class BuyReaderTest extends OperationReaderTest {
+class SellReaderTest extends OperationReaderTest {
 
     @Inject
-    BuyReaderTest(BuyReader reader, CsvGoogleSheetsClient googleSheetsClient) {
-        super(reader, googleSheetsClient, OperationType.BUY);
+    SellReaderTest(SellReader reader, CsvGoogleSheetsClient googleSheetsClient) {
+        super(reader, googleSheetsClient, OperationType.SELL);
     }
 }
