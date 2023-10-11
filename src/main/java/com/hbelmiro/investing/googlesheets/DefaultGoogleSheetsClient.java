@@ -54,8 +54,11 @@ class DefaultGoogleSheetsClient implements GoogleSheetsClient {
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + credentialsFilePath);
         }
-        GoogleClientSecrets clientSecrets =
-                GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+        GoogleClientSecrets clientSecrets;
+        try (InputStreamReader reader = new InputStreamReader(in)) {
+            clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
+        }
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 httpTransport, JSON_FACTORY, clientSecrets, SCOPES)
