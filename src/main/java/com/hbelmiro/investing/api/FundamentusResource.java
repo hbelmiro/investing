@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Path("/hello")
 public class FundamentusResource {
 
-    private static final NumberFormat currencyFormatter = NumberFormat.getInstance(new Locale("pt", "BR"));
+    private static final NumberFormat currencyFormatter = NumberFormat.getInstance(Locale.of("pt", "BR"));
 
     private static final List<String> tickers = List.of(
             "GRND3",
