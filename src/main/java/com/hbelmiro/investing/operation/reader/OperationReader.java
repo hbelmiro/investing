@@ -2,7 +2,7 @@ package com.hbelmiro.investing.operation.reader;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
-import com.hbelmiro.investing.Stock;
+import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
 import org.javamoney.moneta.Money;
 
@@ -17,7 +17,7 @@ import java.util.List;
 
 abstract class OperationReader {
 
-    public static final String RANGE = "A3:F";
+    private static final String RANGE = "A3:F";
 
     private final String page;
 
@@ -56,7 +56,7 @@ abstract class OperationReader {
         return Operation.builder()
                 .type(operationType)
                 .date(LocalDate.parse(row.get(0).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-                .stock(new Stock(row.get(1).toString()))
+                .stock(new Asset(row.get(1).toString(), currencyUnit))
                 .amount(new BigDecimal(row.get(2).toString().replace(".", "").replace(",", ".")))
                 .price(toMoney(row.get(3).toString()))
                 .tax(toMoney(row.get(4).toString()).add(toMoney(row.get(5).toString())))

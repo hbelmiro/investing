@@ -2,7 +2,7 @@ package com.hbelmiro.investing.operation.averageprice;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
-import com.hbelmiro.investing.Stock;
+import com.hbelmiro.investing.asset.Asset;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.javamoney.moneta.Money;
@@ -35,7 +35,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 1))
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(50, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -44,7 +44,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 2))
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(100, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.ONE)
@@ -53,7 +53,7 @@ class AveragePriceCalculatorTest {
         Operation op3 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 3))
                 .type(OperationType.SELL)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(75, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(new BigDecimal(5))
@@ -62,7 +62,7 @@ class AveragePriceCalculatorTest {
         Operation op4 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 4))
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(75, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(new BigDecimal(100))
@@ -79,7 +79,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -88,7 +88,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("BBBB"))
+                .stock(new Asset("BBBB", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -106,7 +106,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -115,7 +115,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, REAIS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -133,7 +133,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -142,7 +142,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Stock("AAAA"))
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, REAIS))
                 .amount(BigDecimal.TEN)
