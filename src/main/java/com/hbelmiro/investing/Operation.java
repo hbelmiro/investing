@@ -1,5 +1,6 @@
 package com.hbelmiro.investing;
 
+import com.hbelmiro.investing.asset.Asset;
 import org.javamoney.moneta.Money;
 
 import java.math.BigDecimal;
@@ -9,7 +10,7 @@ import java.util.Objects;
 public final class Operation {
 
     private final LocalDate date;
-    private final Stock stock;
+    private final Asset asset;
     private final BigDecimal amount;
     private final Money price;
     private final Money tax;
@@ -17,7 +18,7 @@ public final class Operation {
 
     private Operation(Builder builder) {
         date = builder.date;
-        stock = builder.stock;
+        asset = builder.asset;
         amount = builder.amount;
         price = builder.price;
         tax = builder.tax;
@@ -36,7 +37,7 @@ public final class Operation {
 
         var operation = (Operation) o;
         return date.equals(operation.date) &&
-                stock.equals(operation.stock) &&
+                asset.equals(operation.asset) &&
                 amount.compareTo(operation.amount) == 0 &&
                 price.compareTo(operation.price) == 0 &&
                 tax.compareTo(operation.tax) == 0 &&
@@ -45,15 +46,15 @@ public final class Operation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, stock, amount, price, tax, type);
+        return Objects.hash(date, asset, amount, price, tax, type);
     }
 
     public LocalDate getDate() {
         return date;
     }
 
-    public Stock getStock() {
-        return stock;
+    public Asset getStock() {
+        return asset;
     }
 
     public BigDecimal getAmount() {
@@ -76,7 +77,7 @@ public final class Operation {
     public String toString() {
         return "Operation[" +
                 "date=" + date + ", " +
-                "stock=" + stock + ", " +
+                "stock=" + asset + ", " +
                 "amount=" + amount + ", " +
                 "price=" + price + ", " +
                 "tax=" + tax + ", " +
@@ -89,7 +90,7 @@ public final class Operation {
 
     public static class Builder {
         private LocalDate date;
-        private Stock stock;
+        private Asset asset;
         private BigDecimal amount;
         private Money price;
         private Money tax;
@@ -103,8 +104,8 @@ public final class Operation {
             return this;
         }
 
-        public Builder stock(Stock stock) {
-            this.stock = stock;
+        public Builder stock(Asset asset) {
+            this.asset = asset;
             return this;
         }
 

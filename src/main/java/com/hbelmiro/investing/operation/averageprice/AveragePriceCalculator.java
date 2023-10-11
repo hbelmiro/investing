@@ -2,7 +2,7 @@ package com.hbelmiro.investing.operation.averageprice;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
-import com.hbelmiro.investing.Stock;
+import com.hbelmiro.investing.asset.Asset;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
@@ -49,7 +49,7 @@ final class AveragePriceCalculator {
     private static void validate(List<Operation> operations) {
         if (operations.stream()
                 .map(Operation::getStock)
-                .map(Stock::symbol)
+                .map(Asset::symbol)
                 .distinct()
                 .count() > 1) {
             throw new IllegalArgumentException(DIFFERENT_STOCK_ERROR_MSG);

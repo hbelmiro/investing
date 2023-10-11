@@ -26,7 +26,7 @@ import java.util.List;
 
 @ApplicationScoped
 @UnlessBuildProfile("test")
-class DefaultGoogleSheetsClient implements GoogleSheetsClient {
+public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
     private final String credentialsFilePath;
 

@@ -1,6 +1,5 @@
-package com.hbelmiro.investing.operation.reader;
+package com.hbelmiro.investing.googlesheets;
 
-import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
 import io.quarkus.arc.profile.IfBuildProfile;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -13,7 +12,7 @@ import java.util.List;
 
 @ApplicationScoped
 @IfBuildProfile("test")
-class CsvGoogleSheetsClient implements GoogleSheetsClient {
+public class CsvGoogleSheetsClient implements GoogleSheetsClient {
 
     private String csv;
 
@@ -45,7 +44,7 @@ class CsvGoogleSheetsClient implements GoogleSheetsClient {
         return value.replaceAll("^\"|\"$", "");
     }
 
-    void setCsv(String csv) {
+    public void setCsv(String csv) {
         this.csv = csv;
     }
 }

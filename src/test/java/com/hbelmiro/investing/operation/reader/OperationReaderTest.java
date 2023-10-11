@@ -2,7 +2,8 @@ package com.hbelmiro.investing.operation.reader;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
-import com.hbelmiro.investing.Stock;
+import com.hbelmiro.investing.asset.Asset;
+import com.hbelmiro.investing.googlesheets.CsvGoogleSheetsClient;
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +43,7 @@ abstract class OperationReaderTest {
         Operation op1 = Operation.builder()
                 .type(operationType)
                 .date(LocalDate.parse("15/03/2019", dateTimeFormatter))
-                .stock(new Stock("ITUB3"))
+                .stock(new Asset("ITUB3", currencyUnit))
                 .amount(BigDecimal.valueOf(3))
                 .price(Money.of(32.26, currencyUnit))
                 .tax(Money.of(0.06, currencyUnit))
@@ -51,7 +52,7 @@ abstract class OperationReaderTest {
         Operation op2 = Operation.builder()
                 .type(operationType)
                 .date(LocalDate.parse("21/03/2019", dateTimeFormatter))
-                .stock(new Stock("MDIA3"))
+                .stock(new Asset("MDIA3", currencyUnit))
                 .amount(BigDecimal.valueOf(-2))
                 .price(Money.of(43.90, currencyUnit))
                 .tax(Money.of(0.00, currencyUnit))
@@ -60,7 +61,7 @@ abstract class OperationReaderTest {
         Operation op3 = Operation.builder()
                 .type(operationType)
                 .date(LocalDate.parse("21/03/2019", dateTimeFormatter))
-                .stock(new Stock("WEGE3"))
+                .stock(new Asset("WEGE3", currencyUnit))
                 .amount(BigDecimal.valueOf(7))
                 .price(Money.of(18.55, currencyUnit))
                 .tax(Money.of(0.00, currencyUnit))
