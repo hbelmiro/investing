@@ -35,7 +35,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 1))
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(50, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -44,7 +44,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 2))
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(100, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.ONE)
@@ -53,7 +53,7 @@ class AveragePriceCalculatorTest {
         Operation op3 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 3))
                 .type(OperationType.SELL)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(75, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(new BigDecimal(5))
@@ -62,7 +62,7 @@ class AveragePriceCalculatorTest {
         Operation op4 = Operation.builder()
                 .date(LocalDate.of(2020, 1, 4))
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(75, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(new BigDecimal(100))
@@ -75,11 +75,46 @@ class AveragePriceCalculatorTest {
     }
 
     @Test
+    void calculateAssetNoLongerHold() {
+        Operation op1 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 1))
+                .type(OperationType.BUY)
+                .asset(new Asset("AAAA", DOLLARS))
+                .price(Money.of(50, DOLLARS))
+                .tax(Money.of(0.05, DOLLARS))
+                .amount(BigDecimal.TEN)
+                .build();
+
+        Operation op2 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 2))
+                .type(OperationType.BUY)
+                .asset(new Asset("AAAA", DOLLARS))
+                .price(Money.of(100, DOLLARS))
+                .tax(Money.of(0.05, DOLLARS))
+                .amount(BigDecimal.ONE)
+                .build();
+
+        Operation op3 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 3))
+                .type(OperationType.SELL)
+                .asset(new Asset("AAAA", DOLLARS))
+                .price(Money.of(75, DOLLARS))
+                .tax(Money.of(0.05, DOLLARS))
+                .amount(new BigDecimal(11))
+                .build();
+
+        List<Operation> operations = List.of(op1, op2, op3);
+
+        assertThat(averagePriceCalculator.calculate(operations))
+                .isEqualTo(Money.zero(DOLLARS));
+    }
+
+    @Test
     void operationsForNonDistinctStocksShouldThrowException() {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -88,7 +123,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("BBBB", DOLLARS))
+                .asset(new Asset("BBBB", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -106,7 +141,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -115,7 +150,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, REAIS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -133,7 +168,7 @@ class AveragePriceCalculatorTest {
         Operation op1 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -142,7 +177,7 @@ class AveragePriceCalculatorTest {
         Operation op2 = Operation.builder()
                 .date(LocalDate.now())
                 .type(OperationType.BUY)
-                .stock(new Asset("AAAA", DOLLARS))
+                .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
                 .tax(Money.of(0.05, REAIS))
                 .amount(BigDecimal.TEN)

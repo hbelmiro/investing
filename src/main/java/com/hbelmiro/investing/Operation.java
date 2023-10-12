@@ -53,7 +53,7 @@ public final class Operation {
         return date;
     }
 
-    public Asset getStock() {
+    public Asset getAsset() {
         return asset;
     }
 
@@ -77,7 +77,7 @@ public final class Operation {
     public String toString() {
         return "Operation[" +
                 "date=" + date + ", " +
-                "stock=" + asset + ", " +
+                "asset=" + asset + ", " +
                 "amount=" + amount + ", " +
                 "price=" + price + ", " +
                 "tax=" + tax + ", " +
@@ -104,7 +104,7 @@ public final class Operation {
             return this;
         }
 
-        public Builder stock(Asset asset) {
+        public Builder asset(Asset asset) {
             this.asset = asset;
             return this;
         }
