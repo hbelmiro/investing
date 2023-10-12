@@ -2,12 +2,12 @@ package com.hbelmiro.investing.dividend;
 
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import com.hbelmiro.investing.googlesheets.ReadingException;
 import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,12 +34,12 @@ public class DividendReader {
         this.googleSheetsClient = googleSheetsClient;
     }
 
-    List<Dividend> read() throws GeneralSecurityException {
+    public List<Dividend> read() {
         final List<List<Object>> rows;
         try {
             rows = googleSheetsClient.read(PAGE, RANGE);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        } catch (IOException | GeneralSecurityException e) {
+            throw new ReadingException("Error reading dividends.", e);
         }
 
         return rows.stream()
@@ -58,9 +58,9 @@ public class DividendReader {
 
     private static DividendType toDividendType(String type) {
         return switch (type) {
-            case "Dividendos" -> DividendType.DIVIDEND;
+            case "Dividendos", "Rendimento" -> DividendType.DIVIDEND;
             case "JCP" -> DividendType.INTEREST_ON_EQUITY;
-            case "Fr" -> DividendType.FRACTIONS;
+            case "Frações" -> DividendType.FRACTIONS;
             default -> throw new UnsupportedOperationException("Unsupported dividend type: " + type);
         };
     }

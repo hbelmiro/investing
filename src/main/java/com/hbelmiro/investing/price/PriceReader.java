@@ -3,17 +3,17 @@ package com.hbelmiro.investing.price;
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.asset.AssetNotFoundException;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import com.hbelmiro.investing.googlesheets.ReadingException;
 import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
 @ApplicationScoped
-class PriceReader {
+public class PriceReader {
 
     private static final String RANGE = "A2:C";
 
@@ -31,12 +31,12 @@ class PriceReader {
         this.googleSheetsClient = googleSheetsClient;
     }
 
-    Money read(Asset asset) throws GeneralSecurityException {
+    public Money read(Asset asset) {
         final List<List<Object>> rows;
         try {
             rows = googleSheetsClient.read(PAGE, RANGE);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        } catch (IOException | GeneralSecurityException e) {
+            throw new ReadingException("Error reading current price of " + asset.symbol(), e);
         }
 
         return rows.stream()

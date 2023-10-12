@@ -10,7 +10,7 @@ import javax.money.Monetary;
 import java.util.Locale;
 
 @ApplicationScoped
-final class SellReader extends OperationReader {
+public final class SellReader extends OperationReader {
 
     static final CurrencyUnit CURRENCY_UNIT = Monetary.getCurrency(Locale.of("pt", "BR"));
 

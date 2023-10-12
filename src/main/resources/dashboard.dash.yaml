@@ -1,0 +1,29 @@
+properties:
+  # use -1 to cancel auto refresh
+  refreshInterval: -1
+  metricsUrl: /hello_dash
+datasets:
+  - uuid: all_metrics
+    url: ${metricsUrl}
+    cacheEnabled: true
+    refreshTime: 5second
+    columns:
+      - id: Ativo
+        type: LABEL
+      - id: Quantidade
+        type: LABEL
+      - id: Preço Médio
+        type: LABEL
+      - id: Preço Atual
+        type: LABEL
+      - id: Lucro
+        type: LABEL
+      - id: Proventos
+        type: LABEL
+pages:
+  - components:
+      - settings:
+          table:
+          pageSize: 50
+          dataSetLookup:
+            uuid: all_metrics
