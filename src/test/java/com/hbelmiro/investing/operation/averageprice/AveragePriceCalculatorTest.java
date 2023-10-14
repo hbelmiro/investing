@@ -36,6 +36,50 @@ class AveragePriceCalculatorTest {
                 .date(LocalDate.of(2020, 1, 1))
                 .type(OperationType.BUY)
                 .stock(new Asset("AAAA", DOLLARS))
+                .price(Money.of(18.2, DOLLARS))
+                .tax(Money.of(0.04, DOLLARS))
+                .amount(new BigDecimal(8))
+                .build();
+
+        Operation op2 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 2))
+                .type(OperationType.BUY)
+                .stock(new Asset("AAAA", DOLLARS))
+                .price(Money.of(18.15, DOLLARS))
+                .tax(Money.of(0.16, DOLLARS))
+                .amount(BigDecimal.TEN)
+                .build();
+
+        Operation op3 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 3))
+                .type(OperationType.BUY)
+                .stock(new Asset("AAAA", DOLLARS))
+                .price(Money.of(16.34, DOLLARS))
+                .tax(Money.of(0.03, DOLLARS))
+                .amount(new BigDecimal(11))
+                .build();
+
+        Operation op4 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 4))
+                .type(OperationType.BUY)
+                .stock(new Asset("AAAA", DOLLARS))
+                .price(Money.of(14.48, DOLLARS))
+                .tax(Money.of(0.05, DOLLARS))
+                .amount(BigDecimal.ONE)
+                .build();
+
+        List<Operation> operations = List.of(op1, op2, op3, op4);
+
+        assertThat(averagePriceCalculator.calculate(operations).with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("17.39"), DOLLARS));
+    }
+
+    @Test
+    void calculateWithSells() {
+        Operation op1 = Operation.builder()
+                .date(LocalDate.of(2020, 1, 1))
+                .type(OperationType.BUY)
+                .stock(new Asset("AAAA", DOLLARS))
                 .price(Money.of(50, DOLLARS))
                 .tax(Money.of(0.05, DOLLARS))
                 .amount(BigDecimal.TEN)
@@ -70,8 +114,8 @@ class AveragePriceCalculatorTest {
 
         List<Operation> operations = List.of(op1, op2, op3, op4);
 
-        assertThat(averagePriceCalculator.calculate(operations))
-                .isEqualTo(Money.of(new BigDecimal("73.89"), DOLLARS));
+        assertThat(averagePriceCalculator.calculate(operations).with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("73.84"), DOLLARS));
     }
 
     @Test
