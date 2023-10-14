@@ -6,7 +6,6 @@ import com.hbelmiro.investing.asset.Asset;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
-import javax.money.Monetary;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -20,7 +19,7 @@ final class AveragePriceCalculator {
 
     public static final String DIFFERENT_TAX_CURRENCY_ERROR_MSG = "Taxes must be all in the same currency";
 
-    private AveragePriceCalculator() {
+    AveragePriceCalculator() {
     }
 
     Money calculate(List<Operation> operations) {
@@ -33,7 +32,7 @@ final class AveragePriceCalculator {
 
         for (Operation op : sortedOperations) {
             if (op.getType() == OperationType.BUY) {
-                Money opValue = op.getPrice().add(op.getTax()).multiply(op.getAmount());
+                Money opValue = op.getPrice().multiply(op.getAmount()).add(op.getTax());
                 totalPrice = totalPrice.add(opValue);
                 totalAmount = totalAmount.add(op.getAmount());
             } else {
@@ -43,7 +42,7 @@ final class AveragePriceCalculator {
             }
         }
 
-        return totalPrice.divide(totalAmount).with(Monetary.getDefaultRounding());
+        return totalPrice.divide(totalAmount);
     }
 
     private static void validate(List<Operation> operations) {
