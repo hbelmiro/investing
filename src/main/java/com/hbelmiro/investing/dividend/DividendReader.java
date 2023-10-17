@@ -2,19 +2,16 @@ package com.hbelmiro.investing.dividend;
 
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
-import javax.money.CurrencyUnit;
-import javax.money.Monetary;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
 @ApplicationScoped
 public class DividendReader {
@@ -30,8 +27,6 @@ public class DividendReader {
     private static final int VALUE = 2;
 
     private static final int TYPE = 3;
-
-    private static final CurrencyUnit CURRENCY_UNIT = Monetary.getCurrency(Locale.of("pt", "BR"));
 
     private final GoogleSheetsClient googleSheetsClient;
 
@@ -54,10 +49,10 @@ public class DividendReader {
 
     private static Dividend toDividend(List<Object> row) {
         return new Dividend(
-                LocalDate.parse(row.get(0).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                toDividendType(row.get(3).toString()),
-                toMoney(row.get(2).toString()),
-                new Asset(row.get(1).toString(), CURRENCY_UNIT)
+                LocalDate.parse(row.get(DATE).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                toDividendType(row.get(TYPE).toString()),
+                toMoney(row.get(VALUE).toString()),
+                new Asset(row.get(ASSET).toString(), MoneyUtil.BRL)
         );
     }
 
@@ -71,8 +66,7 @@ public class DividendReader {
     }
 
     private static Money toMoney(String value) {
-        var bigDecimal = new BigDecimal(value.replace("R$ ", "").replace(".", "").replace(",", "."));
-        return Money.of(bigDecimal, CURRENCY_UNIT);
+        return MoneyUtil.toBrazilianMoney(value);
     }
 
 }

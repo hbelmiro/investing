@@ -3,14 +3,12 @@ package com.hbelmiro.investing.price;
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.asset.AssetNotFoundException;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
-import javax.money.CurrencyUnit;
-import javax.money.Monetary;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
@@ -51,9 +49,6 @@ class PriceReader {
     }
 
     private static Money toMoney(List<Object> row) {
-        CurrencyUnit currencyUnit = Monetary.getCurrency(row.get(CURRENCY_UNIT).toString());
-        BigDecimal price = new BigDecimal(row.get(PRICE).toString().replace(',', '.'));
-
-        return Money.of(price, currencyUnit);
+        return MoneyUtil.toMoney(row.get(PRICE).toString(), row.get(CURRENCY_UNIT).toString());
     }
 }
