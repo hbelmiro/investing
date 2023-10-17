@@ -4,7 +4,6 @@ import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
-import org.javamoney.moneta.Money;
 
 import javax.money.CurrencyUnit;
 import java.io.IOException;
@@ -14,6 +13,8 @@ import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import static com.hbelmiro.investing.utils.MoneyUtil.toMoney;
 
 abstract class OperationReader {
 
@@ -58,13 +59,8 @@ abstract class OperationReader {
                 .date(LocalDate.parse(row.get(0).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                 .stock(new Asset(row.get(1).toString(), currencyUnit))
                 .amount(new BigDecimal(row.get(2).toString().replace(".", "").replace(",", ".")))
-                .price(toMoney(row.get(3).toString()))
-                .tax(toMoney(row.get(4).toString()).add(toMoney(row.get(5).toString())))
+                .price(toMoney(row.get(3).toString(), currencyUnit))
+                .tax(toMoney(row.get(4).toString(), currencyUnit).add(toMoney(row.get(5).toString(), currencyUnit)))
                 .build();
-    }
-
-    private Money toMoney(String value) {
-        var bigDecimal = new BigDecimal(value.replace("R$ ", "").replace(".", "").replace(",", "."));
-        return Money.of(bigDecimal, currencyUnit);
     }
 }
