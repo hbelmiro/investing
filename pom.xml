@@ -60,6 +60,16 @@
                 <artifactId>google-api-services-sheets</artifactId>
                 <version>v4-rev20230815-2.0.0</version>
             </dependency>
+            <dependency>
+                <groupId>io.quarkiverse.dashbuilder</groupId>
+                <artifactId>quarkus-dashbuilder</artifactId>
+                <version>0.30.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dashbuilder</groupId>
+                <artifactId>dashbuilder-dsl</artifactId>
+                <version>7.74.1.Final</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.assertj</groupId>
@@ -72,11 +82,15 @@
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive</artifactId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client-reactive</artifactId>
+            <artifactId>quarkus-resteasy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -97,6 +111,14 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-sheets</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.dashbuilder</groupId>
+            <artifactId>quarkus-dashbuilder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.dashbuilder</groupId>
+            <artifactId>dashbuilder-dsl</artifactId>
         </dependency>
 
         <dependency>

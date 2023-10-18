@@ -11,7 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @ApplicationScoped
-final class AveragePriceCalculator {
+public final class AveragePriceCalculator {
 
     public static final String DIFFERENT_STOCK_ERROR_MSG = "Operations must be from the same stock";
 
@@ -22,7 +22,7 @@ final class AveragePriceCalculator {
     AveragePriceCalculator() {
     }
 
-    Money calculate(List<Operation> operations) {
+    public Money calculate(List<Operation> operations) {
         validate(operations);
 
         Money totalPrice = Money.zero(operations.get(0).getPrice().getCurrency());
@@ -42,12 +42,16 @@ final class AveragePriceCalculator {
             }
         }
 
-        return totalPrice.divide(totalAmount);
+        if (totalAmount.equals(BigDecimal.ZERO)) {
+            return Money.zero(totalPrice.getCurrency());
+        } else {
+            return totalPrice.divide(totalAmount);
+        }
     }
 
     private static void validate(List<Operation> operations) {
         if (operations.stream()
-                .map(Operation::getStock)
+                .map(Operation::getAsset)
                 .map(Asset::symbol)
                 .distinct()
                 .count() > 1) {

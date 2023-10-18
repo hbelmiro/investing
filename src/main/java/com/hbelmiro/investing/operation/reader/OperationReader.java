@@ -4,10 +4,11 @@ import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
+import com.hbelmiro.investing.googlesheets.ReadingException;
+import org.javamoney.moneta.Money;
 
 import javax.money.CurrencyUnit;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
@@ -43,13 +44,13 @@ abstract class OperationReader {
         this.currencyUnit = currencyUnit;
     }
 
-    List<Operation> read() throws GeneralSecurityException {
+    public List<Operation> read() {
         try {
             return googleSheetsClient.read(page, RANGE).stream()
                     .map(this::toOperation)
                     .toList();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        } catch (IOException | GeneralSecurityException e) {
+            throw new ReadingException("Error reading operation.", e);
         }
     }
 
@@ -57,7 +58,7 @@ abstract class OperationReader {
         return Operation.builder()
                 .type(operationType)
                 .date(LocalDate.parse(row.get(0).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-                .stock(new Asset(row.get(1).toString(), currencyUnit))
+                .asset(new Asset(row.get(1).toString(), currencyUnit))
                 .amount(new BigDecimal(row.get(2).toString().replace(".", "").replace(",", ".")))
                 .price(toMoney(row.get(3).toString(), currencyUnit))
                 .tax(toMoney(row.get(4).toString(), currencyUnit).add(toMoney(row.get(5).toString(), currencyUnit)))
