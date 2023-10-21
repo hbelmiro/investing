@@ -5,7 +5,6 @@ import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.asset.Asset;
 import com.hbelmiro.investing.googlesheets.GoogleSheetsClient;
 import com.hbelmiro.investing.googlesheets.ReadingException;
-import org.javamoney.moneta.Money;
 
 import javax.money.CurrencyUnit;
 import java.io.IOException;
@@ -19,7 +18,7 @@ import static com.hbelmiro.investing.utils.MoneyUtil.toMoney;
 
 abstract class OperationReader {
 
-    private static final String RANGE = "A3:F";
+    private static final String RANGE = "A2:F";
 
     private final String page;
 
@@ -61,7 +60,7 @@ abstract class OperationReader {
                 .asset(new Asset(row.get(1).toString(), currencyUnit))
                 .amount(new BigDecimal(row.get(2).toString().replace(".", "").replace(",", ".")))
                 .price(toMoney(row.get(3).toString(), currencyUnit))
-                .tax(toMoney(row.get(4).toString(), currencyUnit).add(toMoney(row.get(5).toString(), currencyUnit)))
+                .tax(toMoney(row.get(4).toString(), currencyUnit))
                 .build();
     }
 }
