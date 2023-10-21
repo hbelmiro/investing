@@ -1,10 +1,35 @@
 properties:
   # use -1 to cancel auto refresh
   refreshInterval: -1
-  metricsUrl: /hello_dash
+  brazilStocksUrl: /brazil_stocks
+  usStocksUrl: /us_stocks
+navTree:
+  root_items:
+    - type: GROUP
+      id: MainGroup
+      children:
+        - page: BrazilStocks
+        - page: UsStocks
 datasets:
-  - uuid: all_metrics
-    url: ${metricsUrl}
+  - uuid: brazil_stocks
+    url: ${brazilStocksUrl}
+    cacheEnabled: true
+    refreshTime: 5second
+    columns:
+      - id: Ativo
+        type: LABEL
+      - id: Quantidade
+        type: LABEL
+      - id: Preço Médio
+        type: LABEL
+      - id: Preço Atual
+        type: LABEL
+      - id: Lucro
+        type: LABEL
+      - id: Proventos
+        type: LABEL
+  - uuid: us_stocks
+    url: ${usStocksUrl}
     cacheEnabled: true
     refreshTime: 5second
     columns:
@@ -21,9 +46,27 @@ datasets:
       - id: Proventos
         type: LABEL
 pages:
-  - components:
+  - name: index
+    properties:
+      margin: 10px
+    components:
+      - type: TABS
+        properties:
+          width: 100%
+          navGroupId: MainGroup
+          targetDivId: all_div
+      - div: all_div
+  - name: BrazilStocks
+    components:
       - settings:
           table:
           pageSize: 50
           dataSetLookup:
-            uuid: all_metrics
+            uuid: brazil_stocks
+  - name: UsStocks
+    components:
+      - settings:
+          table:
+          pageSize: 50
+          dataSetLookup:
+            uuid: us_stocks

@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Path("/hello_dash")
+@Path("/")
 public class DashboardResource {
 
     @Inject
@@ -43,8 +43,38 @@ public class DashboardResource {
     DividendReader dividendReader;
 
     @GET
+    @Path("brazil_stocks")
     @Produces(MediaType.APPLICATION_JSON)
-    public String hello() {
+    public String brazilStocks() {
+        List<Operation> buyOperations = buyReader.read();
+        List<Operation> sellOperations = sellReader.read();
+
+        List<Asset> assets = buyOperations.stream()
+                .map(Operation::getAsset)
+                .distinct()
+                .toList();
+
+        return assets.stream()
+                .map(asset -> createRow(asset, buyOperations, sellOperations))
+                .filter(Optional::isPresent)
+                .map(row -> row.map(Row::toString).orElseThrow())
+                .sorted()
+                .collect(Collectors.joining(",", "[", "]"));
+
+
+//        return """
+//                    [
+//                        ["John", "Paul"],
+//                        ["Jane", "June"],
+//                        ["Bob", "Rob"],
+//                    ]
+//                """;
+    }
+
+    @GET
+    @Path("us_stocks")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String usStocks() {
         List<Operation> buyOperations = buyReader.read();
         List<Operation> sellOperations = sellReader.read();
 
