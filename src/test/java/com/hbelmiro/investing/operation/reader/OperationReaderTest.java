@@ -17,15 +17,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class OperationReaderTest {
 
-    private final OperationReader reader;
+    private OperationReader reader;
 
-    private final CsvGoogleSheetsClient googleSheetsClient;
+    private CsvGoogleSheetsClient googleSheetsClient;
 
-    private final OperationType operationType;
+    private OperationType operationType;
 
-    private final CurrencyUnit currencyUnit;
+    private CurrencyUnit currencyUnit;
 
-    protected OperationReaderTest(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType) {
+    protected final void initialize(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType) {
         this.reader = reader;
         this.googleSheetsClient = googleSheetsClient;
         this.operationType = operationType;
