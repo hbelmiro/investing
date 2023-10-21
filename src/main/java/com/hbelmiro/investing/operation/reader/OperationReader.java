@@ -43,6 +43,10 @@ abstract class OperationReader {
         this.currencyUnit = currencyUnit;
     }
 
+    CurrencyUnit getCurrencyUnit() {
+        return currencyUnit;
+    }
+
     public List<Operation> read() {
         try {
             return googleSheetsClient.read(page, RANGE).stream()
