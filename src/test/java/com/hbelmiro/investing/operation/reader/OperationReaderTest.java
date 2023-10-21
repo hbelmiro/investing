@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.money.CurrencyUnit;
 import java.math.BigDecimal;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -26,15 +25,15 @@ abstract class OperationReaderTest {
 
     private final CurrencyUnit currencyUnit;
 
-    protected OperationReaderTest(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType, CurrencyUnit currencyUnit) {
+    protected OperationReaderTest(OperationReader reader, CsvGoogleSheetsClient googleSheetsClient, OperationType operationType) {
         this.reader = reader;
         this.googleSheetsClient = googleSheetsClient;
         this.operationType = operationType;
-        this.currencyUnit = currencyUnit;
+        this.currencyUnit = reader.getCurrencyUnit();
     }
 
     @Test
-    void testRead() throws GeneralSecurityException {
+    void testRead() {
         googleSheetsClient.setCsv("/csv/BuyReader/testRead.csv");
         List<Operation> operations = reader.read();
 

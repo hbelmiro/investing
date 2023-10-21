@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import javax.money.CurrencyUnit;
 import javax.money.Monetary;
 import java.math.BigDecimal;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,10 +25,10 @@ class DividendReaderTest {
     CsvGoogleSheetsClient csvGoogleSheetsClient;
 
     @Inject
-    DividendReader dividendReader;
+    BrDividendReader dividendReader;
 
     @Test
-    void readDividends() throws GeneralSecurityException {
+    void readDividends() {
         csvGoogleSheetsClient.setCsv("/csv/DividendReader/readDividends.csv");
 
         List<Dividend> dividends = dividendReader.read();
@@ -38,6 +37,7 @@ class DividendReaderTest {
                 LocalDate.of(2019, 3, 15),
                 DividendType.DIVIDEND,
                 Money.of(new BigDecimal("32.26"), BRL),
+                Money.of(new BigDecimal("0.05"), BRL),
                 new Asset("ITUB3", BRL)
         );
 
@@ -45,6 +45,7 @@ class DividendReaderTest {
                 LocalDate.of(2019, 3, 21),
                 DividendType.INTEREST_ON_EQUITY,
                 Money.of(new BigDecimal("43.90"), BRL),
+                Money.zero(BRL),
                 new Asset("MDIA3", BRL)
         );
 
@@ -52,6 +53,7 @@ class DividendReaderTest {
                 LocalDate.of(2019, 3, 21),
                 DividendType.FRACTIONS,
                 Money.of(new BigDecimal("18.55"), BRL),
+                Money.zero(BRL),
                 new Asset("WEGE3", BRL)
         );
 

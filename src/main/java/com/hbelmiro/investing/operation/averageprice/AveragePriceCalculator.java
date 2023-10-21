@@ -42,7 +42,7 @@ public final class AveragePriceCalculator {
             }
         }
 
-        if (totalAmount.equals(BigDecimal.ZERO)) {
+        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
             return Money.zero(totalPrice.getCurrency());
         } else {
             return totalPrice.divide(totalAmount);
