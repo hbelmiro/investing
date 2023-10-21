@@ -13,7 +13,7 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import io.quarkus.arc.profile.UnlessBuildProfile;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.FileNotFoundException;
@@ -24,7 +24,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 
-@ApplicationScoped
+@Dependent
 @UnlessBuildProfile("test")
 public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
@@ -40,6 +40,8 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
     private static final List<String> SCOPES =
             Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
+
+    private List<List<Object>> cache;
 
     public DefaultGoogleSheetsClient(
             @ConfigProperty(name = "credentials.file-path") String credentialsFilePath,
@@ -71,14 +73,17 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
     @Override
     public List<List<Object>> read(String page, String range) throws GeneralSecurityException, IOException {
-        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        Sheets service = new Sheets.Builder(httpTransport, JSON_FACTORY, getCredentials(httpTransport))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+        if (cache == null) {
+            NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            Sheets service = new Sheets.Builder(httpTransport, JSON_FACTORY, getCredentials(httpTransport))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
 
-        return service.spreadsheets().values()
-                .get(spreadsheetId, page + "!" + range)
-                .execute()
-                .getValues();
+            cache = service.spreadsheets().values()
+                    .get(spreadsheetId, page + "!" + range)
+                    .execute()
+                    .getValues();
+        }
+        return cache;
     }
 }
