@@ -9,6 +9,7 @@ import javax.money.CurrencyUnit;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -48,6 +49,12 @@ public abstract class DividendReader {
 
         return rows.stream()
                 .map(this::toDividend)
+                .toList();
+    }
+
+    public List<Dividend> read(YearMonth yearMonth) {
+        return read().stream()
+                .filter(dividend -> YearMonth.of(dividend.date().getYear(), dividend.date().getMonth()).equals(yearMonth))
                 .toList();
     }
 

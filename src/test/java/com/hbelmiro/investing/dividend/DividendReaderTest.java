@@ -12,6 +12,8 @@ import javax.money.CurrencyUnit;
 import javax.money.Monetary;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,8 +30,8 @@ class DividendReaderTest {
     BrDividendReader dividendReader;
 
     @Test
-    void readDividends() {
-        csvGoogleSheetsClient.setCsv("/csv/DividendReader/readDividends.csv");
+    void read() {
+        csvGoogleSheetsClient.setCsv("/csv/DividendReader/read.csv");
 
         List<Dividend> dividends = dividendReader.read();
 
@@ -59,5 +61,31 @@ class DividendReaderTest {
 
         assertThat(dividends)
                 .containsExactlyInAnyOrder(d1, d2, d3);
+    }
+
+    @Test
+    void readYearMonth() {
+        csvGoogleSheetsClient.setCsv("/csv/DividendReader/readYearMonth.csv");
+
+        List<Dividend> dividends = dividendReader.read(YearMonth.of(2019, Month.MARCH));
+
+        Dividend d1 = new Dividend(
+                LocalDate.of(2019, 3, 15),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("32.26"), BRL),
+                Money.of(new BigDecimal("0.05"), BRL),
+                new Asset("ITUB3", BRL)
+        );
+
+        Dividend d2 = new Dividend(
+                LocalDate.of(2019, 3, 21),
+                DividendType.INTEREST_ON_EQUITY,
+                Money.of(new BigDecimal("43.90"), BRL),
+                Money.zero(BRL),
+                new Asset("MDIA3", BRL)
+        );
+
+        assertThat(dividends)
+                .containsExactlyInAnyOrder(d1, d2);
     }
 }
