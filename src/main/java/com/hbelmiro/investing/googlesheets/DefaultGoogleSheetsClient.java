@@ -30,6 +30,8 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
     private final String credentialsFilePath;
 
+    private final String googleUser;
+
     private final String spreadsheetId;
 
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -45,8 +47,10 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
 
     public DefaultGoogleSheetsClient(
             @ConfigProperty(name = "credentials.file-path") String credentialsFilePath,
+            @ConfigProperty(name = "credentials.user") String googleUser,
             @ConfigProperty(name = "spreadsheet-id") String spreadsheetId) {
         this.credentialsFilePath = credentialsFilePath;
+        this.googleUser = googleUser;
         this.spreadsheetId = spreadsheetId;
     }
 
@@ -68,7 +72,7 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        return new AuthorizationCodeInstalledApp(flow, receiver).authorize(googleUser);
     }
 
     @Override
