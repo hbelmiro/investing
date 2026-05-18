@@ -23,11 +23,16 @@ class DividendReaderTest {
 
     private static final CurrencyUnit BRL = Monetary.getCurrency(CurrencyCode.BRL);
 
+    private static final CurrencyUnit USD = Monetary.getCurrency(CurrencyCode.USD);
+
     @Inject
     CsvGoogleSheetsClient csvGoogleSheetsClient;
 
     @Inject
     BrDividendReader dividendReader;
+
+    @Inject
+    UsDividendReader usDividendReader;
 
     @Test
     void read() {
@@ -83,6 +88,66 @@ class DividendReaderTest {
                 Money.of(new BigDecimal("43.90"), BRL),
                 Money.zero(BRL),
                 new Asset("MDIA3", BRL)
+        );
+
+        assertThat(dividends)
+                .containsExactlyInAnyOrder(d1, d2);
+    }
+
+    @Test
+    void readUsDividends() {
+        csvGoogleSheetsClient.setCsv("/csv/UsDividendReader/read.csv");
+
+        List<Dividend> dividends = usDividendReader.read();
+
+        Dividend d1 = new Dividend(
+                LocalDate.of(2019, 3, 15),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("0.75"), USD),
+                Money.of(new BigDecimal("0.05"), USD),
+                new Asset("AAPL", USD)
+        );
+
+        Dividend d2 = new Dividend(
+                LocalDate.of(2019, 3, 21),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("1.20"), USD),
+                Money.zero(USD),
+                new Asset("VOO", USD)
+        );
+
+        Dividend d3 = new Dividend(
+                LocalDate.of(2019, 3, 21),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("0.51"), USD),
+                Money.zero(USD),
+                new Asset("MSFT", USD)
+        );
+
+        assertThat(dividends)
+                .containsExactlyInAnyOrder(d1, d2, d3);
+    }
+
+    @Test
+    void readUsDividendsYearMonth() {
+        csvGoogleSheetsClient.setCsv("/csv/UsDividendReader/readYearMonth.csv");
+
+        List<Dividend> dividends = usDividendReader.read(YearMonth.of(2019, Month.MARCH));
+
+        Dividend d1 = new Dividend(
+                LocalDate.of(2019, 3, 15),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("0.75"), USD),
+                Money.of(new BigDecimal("0.05"), USD),
+                new Asset("AAPL", USD)
+        );
+
+        Dividend d2 = new Dividend(
+                LocalDate.of(2019, 3, 21),
+                DividendType.DIVIDEND,
+                Money.of(new BigDecimal("1.20"), USD),
+                Money.zero(USD),
+                new Asset("VOO", USD)
         );
 
         assertThat(dividends)

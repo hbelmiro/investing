@@ -15,17 +15,7 @@ import java.util.List;
 
 public abstract class DividendReader {
 
-    private static final String RANGE = "A2:F";
-
-    private static final int DATE = 0;
-
-    private static final int ASSET = 1;
-
-    private static final int VALUE = 2;
-
-    private static final int TAX = 3;
-
-    private static final int TYPE = 5;
+    protected record ColumnMapping(String range, int date, int asset, int value, int tax, int type) {}
 
     private final GoogleSheetsClient googleSheetsClient;
 
@@ -33,16 +23,19 @@ public abstract class DividendReader {
 
     private final CurrencyUnit currencyUnit;
 
-    protected DividendReader(GoogleSheetsClient googleSheetsClient, String page, CurrencyUnit currencyUnit) {
+    private final ColumnMapping columnMapping;
+
+    protected DividendReader(GoogleSheetsClient googleSheetsClient, String page, CurrencyUnit currencyUnit, ColumnMapping columnMapping) {
         this.googleSheetsClient = googleSheetsClient;
         this.page = page;
         this.currencyUnit = currencyUnit;
+        this.columnMapping = columnMapping;
     }
 
     public List<Dividend> read() {
         final List<List<Object>> rows;
         try {
-            rows = googleSheetsClient.read(page, RANGE);
+            rows = googleSheetsClient.read(page, columnMapping.range());
         } catch (IOException | GeneralSecurityException e) {
             throw new ReadingException("Error reading dividends.", e);
         }
@@ -60,17 +53,17 @@ public abstract class DividendReader {
 
     private Dividend toDividend(List<Object> row) {
         return new Dividend(
-                LocalDate.parse(row.get(DATE).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                toDividendType(row.get(TYPE).toString()),
-                MoneyUtil.toMoney(row.get(VALUE).toString(), currencyUnit),
-                MoneyUtil.toMoney(row.get(TAX).toString(), currencyUnit),
-                new Asset(row.get(ASSET).toString(), currencyUnit)
+                LocalDate.parse(row.get(columnMapping.date()).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                toDividendType(row.get(columnMapping.type()).toString()),
+                MoneyUtil.toMoney(row.get(columnMapping.value()).toString(), currencyUnit),
+                MoneyUtil.toMoney(row.get(columnMapping.tax()).toString(), currencyUnit),
+                new Asset(row.get(columnMapping.asset()).toString(), currencyUnit)
         );
     }
 
     private static DividendType toDividendType(String type) {
         return switch (type) {
-            case "Dividendo", "Dividendos", "Rendimento" -> DividendType.DIVIDEND;
+            case "Dividendo", "Dividendos", "Rendimento", "Estorno Impostos sobre Dividendos", "Diferença Avenue", "?" -> DividendType.DIVIDEND;
             case "JCP" -> DividendType.INTEREST_ON_EQUITY;
             case "Frações" -> DividendType.FRACTIONS;
             case "30% Imposto/Dividendo" -> DividendType.TAX;
