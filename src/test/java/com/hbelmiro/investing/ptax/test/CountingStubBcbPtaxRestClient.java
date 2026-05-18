@@ -5,7 +5,11 @@ import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class CountingStubBcbPtaxRestClient extends StubBcbPtaxRestClient {
-    public int callCount = 0;
+    private int callCount = 0;
+
+    public int getCallCount() {
+        return callCount;
+    }
 
     @Override
     public BcbPtaxResponse getCotacaoDolarDia(String dataCotacaoValue, String format) {

@@ -100,7 +100,7 @@ class DefaultPtaxServiceTest {
         service.getCotacaoCompra(LocalDate.of(2025, 1, 15));
         service.getCotacaoCompra(LocalDate.of(2025, 1, 15));
 
-        assertThat(stub.callCount).isEqualTo(1);
+        assertThat(stub.getCallCount()).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +115,7 @@ class DefaultPtaxServiceTest {
         Money result = service.getCotacaoCompra(LocalDate.of(2025, 1, 18));
 
         assertThat(result).isEqualTo(Money.of(new BigDecimal("6.1000"), MoneyUtil.BRL));
-        assertThat(stub.callCount).isEqualTo(1);
+        assertThat(stub.getCallCount()).isEqualTo(1);
     }
 
     @Test

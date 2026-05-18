@@ -9,9 +9,10 @@ import org.javamoney.moneta.Money;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 @UnlessBuildProfile("test")
@@ -23,7 +24,14 @@ public class DefaultPtaxService implements PtaxService {
     private static final String API_RESPONSE_FORMAT = "json";
 
     private final BcbPtaxRestClient restClient;
-    private final Map<LocalDate, PtaxRate> cache = new ConcurrentHashMap<>();
+    private final Map<LocalDate, PtaxRate> cache = Collections.synchronizedMap(
+            new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<LocalDate, PtaxRate> eldest) {
+                    return size() > MAX_CACHE_SIZE;
+                }
+            }
+    );
 
     @Inject
     DefaultPtaxService(@RestClient BcbPtaxRestClient restClient) {
@@ -47,9 +55,6 @@ public class DefaultPtaxService implements PtaxService {
             LocalDate lookupDate = date.minusDays(i);
             PtaxRate cachedRate = cache.get(lookupDate);
             if (cachedRate != null) {
-                if (!date.equals(lookupDate)) {
-                    cache.put(date, cachedRate);
-                }
                 return cachedRate;
             }
         }
@@ -61,20 +66,10 @@ public class DefaultPtaxService implements PtaxService {
             List<PtaxRate> rates = response.value();
             if (rates != null && !rates.isEmpty()) {
                 PtaxRate rate = rates.getLast();
-                evictIfNeeded();
                 cache.put(lookupDate, rate);
-                if (!date.equals(lookupDate)) {
-                    cache.put(date, rate);
-                }
                 return rate;
             }
         }
         throw new PtaxRateNotFoundException(date, MAX_LOOKBACK_DAYS);
-    }
-
-    private void evictIfNeeded() {
-        if (cache.size() >= MAX_CACHE_SIZE) {
-            cache.keySet().stream().min(LocalDate::compareTo).ifPresent(cache::remove);
-        }
     }
 }
