@@ -18,7 +18,7 @@ describe('fetchStocks', () => {
 
     const result = await fetchStocks('brazil')
     expect(result).toEqual(mockData)
-    expect(fetch).toHaveBeenCalledWith('/brazil_stocks')
+    expect(fetch).toHaveBeenCalledWith('/brazil_stocks', { signal: undefined })
   })
 
   it('fetches US stocks and returns parsed data', async () => {
@@ -32,7 +32,7 @@ describe('fetchStocks', () => {
 
     const result = await fetchStocks('us')
     expect(result).toEqual(mockData)
-    expect(fetch).toHaveBeenCalledWith('/us_stocks')
+    expect(fetch).toHaveBeenCalledWith('/us_stocks', { signal: undefined })
   })
 
   it('throws on non-ok response', async () => {

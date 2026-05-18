@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, KeyboardEvent } from 'react'
+import { useEffect, useState, KeyboardEvent } from 'react'
 import { fetchStocks, type Market } from '../api/client'
 import type { StocksResponse } from '../api/types'
 import { StockTable } from '../components/StockTable'
@@ -14,22 +14,38 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadData = useCallback(async (market: Market) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await fetchStocks(market)
-      setData(result)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro ao carregar dados')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
-    loadData(activeTab)
-  }, [activeTab, loadData])
+    const abortController = new AbortController()
+
+    const loadDataWithAbort = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await fetchStocks(activeTab, abortController.signal)
+        if (!abortController.signal.aborted) {
+          setData(result)
+        }
+      } catch (e) {
+        if (!abortController.signal.aborted) {
+          if (e instanceof Error && e.name === 'AbortError') {
+            // Silent abort, don't show error
+            return
+          }
+          setError(e instanceof Error ? e.message : 'Erro ao carregar dados')
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadDataWithAbort()
+
+    return () => {
+      abortController.abort()
+    }
+  }, [activeTab])
 
   const handleTabChange = (market: Market) => {
     setActiveTab(market)
@@ -58,6 +74,7 @@ export function Dashboard() {
           <button
             key={tab.key}
             role="tab"
+            id={`${tab.key}-tab`}
             data-tab={tab.key}
             aria-selected={activeTab === tab.key}
             aria-controls="stock-tabpanel"
@@ -74,6 +91,7 @@ export function Dashboard() {
         id="stock-tabpanel"
         role="tabpanel"
         className="tab-panel"
+        tabIndex={loading || error ? 0 : -1}
         aria-labelledby={`${activeTab}-tab`}
       >
         {loading && <p>Carregando...</p>}

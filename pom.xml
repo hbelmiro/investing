@@ -200,8 +200,9 @@
                         <goals>
                             <goal>npm</goal>
                         </goals>
-                        <phase>generate-resources</phase>
+                        <phase>test</phase>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <arguments>run test</arguments>
                         </configuration>
                     </execution>

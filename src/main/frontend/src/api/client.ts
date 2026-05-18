@@ -7,8 +7,8 @@ const ENDPOINTS: Record<Market, string> = {
   us: '/us_stocks',
 }
 
-export async function fetchStocks(market: Market): Promise<StocksResponse> {
-  const response = await fetch(ENDPOINTS[market])
+export async function fetchStocks(market: Market, signal?: AbortSignal): Promise<StocksResponse> {
+  const response = await fetch(ENDPOINTS[market], { signal })
   if (!response.ok) {
     throw new Error(`Failed to fetch ${market} stocks: ${response.status} ${response.statusText}`)
   }
