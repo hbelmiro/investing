@@ -22,7 +22,7 @@ export function StockTable({ data }: StockTableProps) {
         {data.map((row) => (
           <tr key={row[0]}>
             {row.map((cell, i) => (
-              <td key={i}>{cell}</td>
+              <td key={`${row[0]}-${i}`}>{cell}</td>
             ))}
           </tr>
         ))}

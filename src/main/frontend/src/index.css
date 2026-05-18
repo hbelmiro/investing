@@ -55,6 +55,15 @@ body {
   color: #1a1a2e;
 }
 
+.tab:focus-visible {
+  outline: 2px solid #1a1a2e;
+  outline-offset: 2px;
+}
+
+.tab:active {
+  background: #f0f0f0;
+}
+
 .tab-active {
   color: #1a1a2e;
   font-weight: 600;

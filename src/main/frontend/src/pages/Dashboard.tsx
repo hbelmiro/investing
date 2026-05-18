@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, KeyboardEvent } from 'react'
 import { fetchStocks, type Market } from '../api/client'
 import type { StocksResponse } from '../api/types'
 import { StockTable } from '../components/StockTable'
@@ -32,26 +32,50 @@ export function Dashboard() {
   }, [activeTab, loadData])
 
   const handleTabChange = (market: Market) => {
-    setData(null)
     setActiveTab(market)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault()
+      const nextIndex = event.key === 'ArrowLeft'
+        ? (index - 1 + TABS.length) % TABS.length
+        : (index + 1) % TABS.length
+
+      const nextTab = TABS[nextIndex]
+      handleTabChange(nextTab.key)
+
+      // Focus the next tab
+      const tabElement = document.querySelector(`[data-tab="${nextTab.key}"]`) as HTMLElement
+      tabElement?.focus()
+    }
   }
 
   return (
     <div>
       <div role="tablist" className="tabs">
-        {TABS.map((tab) => (
+        {TABS.map((tab, index) => (
           <button
             key={tab.key}
             role="tab"
+            data-tab={tab.key}
             aria-selected={activeTab === tab.key}
+            aria-controls="stock-tabpanel"
+            tabIndex={activeTab === tab.key ? 0 : -1}
             className={`tab ${activeTab === tab.key ? 'tab-active' : ''}`}
             onClick={() => handleTabChange(tab.key)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      <div role="tabpanel" className="tab-panel">
+      <div
+        id="stock-tabpanel"
+        role="tabpanel"
+        className="tab-panel"
+        aria-labelledby={`${activeTab}-tab`}
+      >
         {loading && <p>Carregando...</p>}
         {error && <p className="error">Erro: {error}</p>}
         {!loading && !error && data && <StockTable data={data} />}
