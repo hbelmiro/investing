@@ -15,7 +15,7 @@ import java.util.List;
 @ApplicationScoped
 public class PriceReader {
 
-    private static final String RANGE = "A2:C";
+    private static final String RANGE = "B2:D";
 
     private static final String PAGE = "Cotações";
 
