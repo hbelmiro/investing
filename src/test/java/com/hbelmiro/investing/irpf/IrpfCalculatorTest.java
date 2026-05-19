@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -155,14 +156,14 @@ class IrpfCalculatorTest {
     // gains = 88.50 + 395.42 = 483.92
     static Stream<Arguments> multipleBuysAndSellsArgs() {
         return Stream.of(
-                Arguments.of("chronological order", List.of(BUY_JAN, BUY_MAR), List.of(SELL_FEB, SELL_JUN)),
-                Arguments.of("reversed order", List.of(BUY_MAR, BUY_JAN), List.of(SELL_JUN, SELL_FEB))
+                Arguments.of(Named.of("chronological order", List.of(BUY_JAN, BUY_MAR)), List.of(SELL_FEB, SELL_JUN)),
+                Arguments.of(Named.of("reversed order", List.of(BUY_MAR, BUY_JAN)), List.of(SELL_JUN, SELL_FEB))
         );
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("multipleBuysAndSellsArgs")
-    void calculateCapitalGains_multipleBuysAndSells(String name, List<Operation> buys, List<Operation> sells) {
+    void calculateCapitalGains_multipleBuysAndSells(List<Operation> buys, List<Operation> sells) {
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(buys, sells, 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -266,14 +267,14 @@ class IrpfCalculatorTest {
     // total = 4.2266 + 6.852 = 11.0786
     static Stream<Arguments> dividendsArgs() {
         return Stream.of(
-                Arguments.of("chronological order", List.of(DIV_JAN, DIV_JUN)),
-                Arguments.of("reversed order", List.of(DIV_JUN, DIV_JAN))
+                Arguments.of(Named.of("chronological order", List.of(DIV_JAN, DIV_JUN))),
+                Arguments.of(Named.of("reversed order", List.of(DIV_JUN, DIV_JAN)))
         );
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("dividendsArgs")
-    void calculateDividendsBrl_twoDividends(String name, List<Dividend> dividends) {
+    void calculateDividendsBrl_twoDividends(List<Dividend> dividends) {
         Money result = irpfCalculator.calculateDividendsBrl(dividends, fakePtaxService);
 
         assertThat(result.with(Monetary.getDefaultRounding()))
