@@ -4,7 +4,7 @@ Instructions for AI coding agents working in this codebase.
 
 ## Project Overview
 
-Java 22 / Quarkus application for investment portfolio management. Reads portfolio data from Google Sheets, scrapes financial indicators from Fundamentus (a Brazilian investment analysis site), and renders dashboards via Dashbuilder. Supports both Brazilian and US stock markets.
+Java 25 / Quarkus application for investment portfolio management. Reads portfolio data from Google Sheets, scrapes financial indicators from Fundamentus (a Brazilian investment analysis site), and renders dashboards via Dashbuilder. Supports both Brazilian and US stock markets.
 
 Key dependencies: Quarkus 3.x, Google Sheets API, JSoup (web scraping), JavaMoney/Moneta (monetary values), Dashbuilder (dashboards), RESTEasy (REST API).
 
@@ -57,6 +57,6 @@ com.hbelmiro.investing
 
 ## CI/CD
 
-- **Maven CI**: Runs on pushes and PRs to `main`. Java 22, Temurin distribution, Maven caching.
+- **Maven CI**: Runs on pushes and PRs to `main`. Java 25, Temurin distribution, Maven caching.
 - **Dependabot**: Daily Maven dependency PRs, weekly GitHub Actions PRs. Auto-merged after CI passes. `maven-compiler-plugin` is excluded from updates (pinned intentionally).
 - **CodeQL**: Security analysis on pushes, PRs, and a weekly Saturday schedule. Uses `security-and-quality` query suite for Java.
