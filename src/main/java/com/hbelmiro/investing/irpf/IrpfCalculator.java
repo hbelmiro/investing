@@ -13,34 +13,28 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * IRPF tax calculations per Receita Federal rules (IN DPRF 19/1992).
+ *
+ * <p><b>Average cost (custo medio ponderado):</b> weighted average of all buy costs, recalculated
+ * on each new purchase. Sells deplete the position at the current average cost but do not change
+ * the per-unit average; subsequent buys blend with the remaining position.
+ * See: <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido">Ganho Liquido — Receita Federal</a>
+ *
+ * <p><b>Capital gains:</b> difference between sell proceeds (price x amount x PTAX venda) and
+ * cost basis (running avg cost x amount). Buys and sells are processed chronologically to
+ * maintain accurate position state.
+ *
+ * <p><b>Dividends:</b> net value (value - withholding tax) converted at PTAX venda on the
+ * payment date.
+ */
 @ApplicationScoped
 public final class IrpfCalculator {
 
     IrpfCalculator() {
     }
 
-    public Money calculateAverageCostBrl(List<Operation> buys, PtaxService ptaxService) {
-        if (buys.isEmpty()) {
-            return Money.zero(MoneyUtil.BRL);
-        }
-
-        Money totalCostBrl = Money.zero(MoneyUtil.BRL);
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        for (Operation buy : buys) {
-            Money costBrl = toCostBrl(buy, ptaxService);
-            totalCostBrl = totalCostBrl.add(costBrl);
-            totalAmount = totalAmount.add(buy.getAmount());
-        }
-
-        return totalCostBrl.divide(totalAmount);
-    }
-
-    public Money calculateCapitalGains(List<Operation> buys, List<Operation> sells, int year, PtaxService ptaxService) {
-        if (sells.isEmpty()) {
-            return Money.zero(MoneyUtil.BRL);
-        }
-
+    public CapitalGainsResult calculateCapitalGains(List<Operation> buys, List<Operation> sells, int year, PtaxService ptaxService) {
         Money totalCostBrl = Money.zero(MoneyUtil.BRL);
         BigDecimal totalAmount = BigDecimal.ZERO;
         Money totalGains = Money.zero(MoneyUtil.BRL);
@@ -75,7 +69,11 @@ public final class IrpfCalculator {
             }
         }
 
-        return totalGains;
+        Money avgCostBrl = totalAmount.compareTo(BigDecimal.ZERO) > 0
+                ? totalCostBrl.divide(totalAmount)
+                : Money.zero(MoneyUtil.BRL);
+
+        return new CapitalGainsResult(totalGains, avgCostBrl);
     }
 
     public Money calculateDividendsBrl(List<Dividend> dividends, PtaxService ptaxService) {

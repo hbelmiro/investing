@@ -93,19 +93,13 @@ public class IrpfResource {
                 return null;
             }
 
-            Money avgCostBrl = irpfCalculator.calculateAverageCostBrl(buys, ptaxService).with(rounding);
-            Money capitalGainsBrl = irpfCalculator.calculateCapitalGains(buys, allSymbolSells, year, ptaxService).with(rounding);
+            CapitalGainsResult gainsResult = irpfCalculator.calculateCapitalGains(buys, allSymbolSells, year, ptaxService);
+            Money avgCostBrl = gainsResult.avgCostBrl().with(rounding);
+            Money capitalGainsBrl = gainsResult.capitalGainsBrl().with(rounding);
             Money dividendsBrl = irpfCalculator.calculateDividendsBrl(dividends, ptaxService).with(rounding);
             Money totalCostBrl = avgCostBrl.multiply(quantity).with(rounding);
 
-            return new IrpfAssetData(
-                    symbol,
-                    quantity,
-                    toBigDecimal(avgCostBrl),
-                    toBigDecimal(totalCostBrl),
-                    toBigDecimal(capitalGainsBrl),
-                    toBigDecimal(dividendsBrl)
-            );
+            return new IrpfAssetData(symbol, quantity, avgCostBrl, totalCostBrl, capitalGainsBrl, dividendsBrl);
         }).filter(Objects::nonNull).toList();
     }
 
@@ -130,9 +124,5 @@ public class IrpfResource {
         if (!dividendSymbols.isEmpty()) {
             throw new IllegalStateException("Dividends for symbols without buy history: " + dividendSymbols);
         }
-    }
-
-    private static BigDecimal toBigDecimal(Money money) {
-        return money.getNumber().numberValue(BigDecimal.class);
     }
 }

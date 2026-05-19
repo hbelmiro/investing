@@ -53,6 +53,7 @@ public class CsvGoogleSheetsClient implements GoogleSheetsClient {
 
     public void setCsv(String csv) {
         this.csv = csv;
+        pageCsvMap.clear();
     }
 
     public void setCsv(String page, String csvPath) {
