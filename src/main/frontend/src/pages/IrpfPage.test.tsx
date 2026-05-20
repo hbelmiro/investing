@@ -9,8 +9,8 @@ vi.mock('../api/client')
 
 describe('IrpfPage', () => {
   const irpfData: IrpfResponse = [
-    { symbol: 'AAPL', quantity: 12, avgCostUsd: 53.39, totalCostUsd: 640.68, avgCostBrl: 290.29, totalCostBrl: 3483.48, ptaxRate: 5.4369, capitalGainsBrl: 328.23, totalCapitalGainsBrl: 328.23, totalDividendsBrl: 3.71 },
-    { symbol: 'MSFT', quantity: 8, avgCostUsd: 40.03, totalCostUsd: 320.24, avgCostBrl: 241.63, totalCostBrl: 1933.04, ptaxRate: 6.037, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, totalDividendsBrl: 6.61 },
+    { symbol: 'AAPL', quantity: 12, avgCostUsd: 53.39, totalCostUsd: 640.68, avgCostBrl: 290.29, totalCostBrl: 3483.48, ptaxRate: 5.4369, capitalGainsBrl: 328.23, totalCapitalGainsBrl: 328.23, dividendsGrossBrl: 4.53, dividendsTaxBrl: 0.30 },
+    { symbol: 'MSFT', quantity: 8, avgCostUsd: 40.03, totalCostUsd: 320.24, avgCostBrl: 241.63, totalCostBrl: 1933.04, ptaxRate: 6.037, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 6.61, dividendsTaxBrl: 0 },
   ]
 
   const currentYear = new Date().getFullYear()

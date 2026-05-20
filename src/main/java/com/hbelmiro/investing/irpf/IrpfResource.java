@@ -130,7 +130,9 @@ public class IrpfResource {
                 Money avgCostUsd = gainsResult.avgCostUsd().with(rounding);
                 Money capitalGainsBrl = gainsResult.capitalGainsBrl().with(rounding);
                 Money totalCapitalGainsBrl = gainsResult.totalCapitalGainsBrl().with(rounding);
-                Money dividendsBrl = irpfCalculator.calculateDividendsBrl(dividends, ptaxService).with(rounding);
+                DividendsResult dividendsResult = irpfCalculator.calculateDividendsBrl(dividends, ptaxService);
+                Money dividendsGrossBrl = dividendsResult.grossBrl().with(rounding);
+                Money dividendsTaxBrl = dividendsResult.taxBrl().with(rounding);
 
                 BigDecimal totalBought = symbolBuys.stream()
                         .filter(op -> !op.getDate().isAfter(endOfYear))
@@ -156,7 +158,7 @@ public class IrpfResource {
                         ? avgCostBrl.divide(avgCostUsd.getNumber())
                         : Money.zero(MoneyUtil.BRL);
 
-                return new IrpfAssetData(symbol, quantity, avgCostBrl, totalCostBrl, avgCostUsd, totalCostUsd, ptaxRate, capitalGainsBrl, totalCapitalGainsBrl, dividendsBrl, null);
+                return new IrpfAssetData(symbol, quantity, avgCostBrl, totalCostBrl, avgCostUsd, totalCostUsd, ptaxRate, capitalGainsBrl, totalCapitalGainsBrl, dividendsGrossBrl, dividendsTaxBrl, null);
             } catch (RuntimeException e) {
                 return IrpfAssetData.error(symbol, e.getMessage());
             }

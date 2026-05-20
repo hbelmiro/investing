@@ -21,7 +21,8 @@ export interface IrpfAssetData {
   ptaxRate?: number
   capitalGainsBrl?: number
   totalCapitalGainsBrl?: number
-  totalDividendsBrl?: number
+  dividendsGrossBrl?: number
+  dividendsTaxBrl?: number
   error?: string
 }
 
@@ -37,5 +38,6 @@ export const IRPF_COLUMN_HEADERS = [
   'PTAX',
   'Ganho de Capital Ano (BRL)',
   'Ganho de Capital Total (BRL)',
-  'Dividendos (BRL)',
+  'Dividendos Bruto (BRL)',
+  'Imposto Dividendos (BRL)',
 ] as const

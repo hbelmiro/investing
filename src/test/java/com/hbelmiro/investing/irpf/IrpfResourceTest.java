@@ -68,7 +68,8 @@ class IrpfResourceTest {
         assertThat(aapl.totalCostUsd()).isEqualTo(usd("640.68"));
         assertThat(aapl.ptaxRate()).isNotNull();
         assertThat(aapl.capitalGainsBrl()).isEqualTo(brl("328.23"));
-        assertThat(aapl.totalDividendsBrl()).isEqualTo(brl("3.71"));
+        assertThat(aapl.dividendsGrossBrl()).isEqualTo(brl("4.28"));
+        assertThat(aapl.dividendsTaxBrl()).isEqualTo(brl("0.57"));
 
         // MSFT: buy in 2025, no sells, dividend in 2025
         // avgCostBrl: (320.20*6.0370) / 8 = 1933.0474 / 8 = 241.63
@@ -82,7 +83,8 @@ class IrpfResourceTest {
         assertThat(msft.avgCostBrl()).isEqualTo(brl("241.63"));
         assertThat(msft.totalCostBrl()).isEqualTo(brl("1933.04"));
         assertThat(msft.capitalGainsBrl()).isEqualTo(brl("0"));
-        assertThat(msft.totalDividendsBrl()).isEqualTo(brl("6.61"));
+        assertThat(msft.dividendsGrossBrl()).isEqualTo(brl("6.61"));
+        assertThat(msft.dividendsTaxBrl()).isEqualTo(brl("0"));
     }
 
     @Test
@@ -97,7 +99,8 @@ class IrpfResourceTest {
         // Only the 2025 dividend should be included, not the 2024 one
         // 2024 dividend: (0.50-0.05)*5.4100 = 2.4345 — NOT included
         // 2025 dividend: (0.75-0.10)*5.7100 = 3.7115 → 3.71
-        assertThat(aapl.totalDividendsBrl()).isEqualTo(brl("3.71"));
+        assertThat(aapl.dividendsGrossBrl()).isEqualTo(brl("4.28"));
+        assertThat(aapl.dividendsTaxBrl()).isEqualTo(brl("0.57"));
     }
 
     @Test
@@ -187,7 +190,8 @@ class IrpfResourceTest {
         // dividend: (2.00-0.30)*5.6100 = 1.70*5.6100 = 9.54
         IrpfAssetData vnq = result.stream().filter(d -> d.symbol().equals("VNQ")).findFirst().orElseThrow();
         assertThat(vnq.quantity()).isEqualByComparingTo(new BigDecimal("20"));
-        assertThat(vnq.totalDividendsBrl()).isEqualTo(brl("9.54"));
+        assertThat(vnq.dividendsGrossBrl()).isEqualTo(brl("11.22"));
+        assertThat(vnq.dividendsTaxBrl()).isEqualTo(brl("1.68"));
     }
 
     @Test
@@ -204,7 +208,8 @@ class IrpfResourceTest {
         // dividend: (0.50-0.00)*5.5100 = 2.76
         IrpfAssetData tflo = result.stream().filter(d -> d.symbol().equals("TFLO")).findFirst().orElseThrow();
         assertThat(tflo.quantity()).isEqualByComparingTo(new BigDecimal("50"));
-        assertThat(tflo.totalDividendsBrl()).isEqualTo(brl("2.76"));
+        assertThat(tflo.dividendsGrossBrl()).isEqualTo(brl("2.76"));
+        assertThat(tflo.dividendsTaxBrl()).isEqualTo(brl("0"));
     }
 
     @Test

@@ -48,7 +48,7 @@ describe('fetchStocks', () => {
 
 describe('fetchIrpfData', () => {
   const mockData: IrpfResponse = [
-    { symbol: 'AAPL', quantity: 12, avgCostBrl: 290.29, totalCostBrl: 3483.48, capitalGainsBrl: 328.23, totalDividendsBrl: 3.71 },
+    { symbol: 'AAPL', quantity: 12, avgCostBrl: 290.29, totalCostBrl: 3483.48, capitalGainsBrl: 328.23, dividendsGrossBrl: 4.53, dividendsTaxBrl: 0.30 },
   ]
 
   beforeEach(() => {

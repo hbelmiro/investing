@@ -53,11 +53,28 @@ com.hbelmiro.investing
 
 Per Receita Federal (https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido):
 
-- **Average cost (custo médio ponderado):** simple weighted average of ALL buys:
-  `sum(buy price × buy quantity + tax) / sum(buy quantities)`. Sells do NOT affect the per-unit average.
-- **Capital gains:** `(sell price × amount × PTAX venda) - (avg cost BRL × amount)`.
-  The avg cost used is the buy-only weighted average.
-- **Bens e Direitos:** declare remaining quantity × avg cost at 31/12.
+- **Average buy cost (custo médio de aquisição):** weighted average of buys only, from the
+  beginning of operations up to a given date. Sells do NOT affect it.
+  Formula: `sum(buy price × buy quantity + tax) / sum(buy quantities)` for all buys up to that date.
+  Applies to both BRL (using PTAX compra on buy date) and USD.
+
+- **Capital gains per sell:** each sell uses the avg buy cost **as of that sell's date** — only
+  buys up to that date are included. Future buys do not retroactively change prior sells.
+  Formula: `(sell price × amount × PTAX venda) - (avg buy cost BRL at sell date × amount)`.
+
+- **Year capital gains (ganho de capital do ano):** sum of capital gains from sells in that
+  specific year only.
+
+- **Total capital gains (ganho de capital total):** sum of capital gains from all sells up to
+  31/12 of that year (including prior years).
+
+- **Average cost for Bens e Direitos:** avg buy cost at 31/12 (all buys up to end of year).
+  Declared as: remaining quantity × avg cost.
+
+- **Remaining quantity:** total bought − total sold up to 31/12.
+
+- **Dividends:** net value (value − withholding tax) converted at PTAX venda on payment date.
+  Only dividends in the target year are summed.
 
 ## Security & Sensitive Data
 

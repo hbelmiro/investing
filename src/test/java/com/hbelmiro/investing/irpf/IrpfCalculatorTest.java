@@ -153,14 +153,16 @@ class IrpfCalculatorTest {
 
     // BUY_JAN: 10 shares @ $50, ptaxCompra=6.0370 → costBrl=3018.50, costUsd=500
     // BUY_MAR: 10 shares @ $60, ptaxCompra=5.5000 → costBrl=3300.00, costUsd=600
-    // avgCostBrl = (3018.50 + 3300.00) / 20 = 315.925 (buy-only average, sells don't change it)
-    // avgCostUsd = (500 + 600) / 20 = 55.00 (buy-only average)
     //
-    // SELL_FEB: 5 shares @ $55, ptaxVenda=5.8100
-    //   gain = (55*5*5.8100) - (315.925*5) = 1597.75 - 1579.625 = 18.125
-    // SELL_JUN: 5 shares @ $70, ptaxVenda=5.7100
-    //   gain = (70*5*5.7100) - (315.925*5) = 1998.50 - 1579.625 = 418.875
-    // totalGains = 18.125 + 418.875 = 437.00
+    // Point-in-time avg: each sell uses avg from buys up to that sell date.
+    // SELL_FEB (Feb 15): buys up to Feb 15 = BUY_JAN only → avg=3018.50/10=301.85
+    //   gain = (55*5*5.81) - (301.85*5) = 1597.75 - 1509.25 = 88.50
+    // SELL_JUN (Jun 15): buys up to Jun 15 = BUY_JAN + BUY_MAR → avg=6318.50/20=315.925
+    //   gain = (70*5*5.71) - (315.925*5) = 1998.50 - 1579.625 = 418.875
+    // totalGains = 88.50 + 418.875 = 507.375 → 507.38
+    //
+    // avgCostBrl at endOfYear (for Bens e Direitos) = all buys = 315.92
+    // avgCostUsd at endOfYear = (500+600)/20 = 55.00
     static Stream<Arguments> multipleBuysAndSellsArgs() {
         return Stream.of(
                 Arguments.of(Named.of("chronological order", List.of(BUY_JAN, BUY_MAR)), List.of(SELL_FEB, SELL_JUN)),
@@ -174,7 +176,7 @@ class IrpfCalculatorTest {
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(buys, sells, 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
-                .isEqualTo(Money.of(new BigDecimal("437.00"), MoneyUtil.BRL));
+                .isEqualTo(Money.of(new BigDecimal("507.38"), MoneyUtil.BRL));
         assertThat(result.avgCostBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("315.92"), MoneyUtil.BRL));
         assertThat(result.avgCostUsd().with(Monetary.getDefaultRounding()))
@@ -370,13 +372,13 @@ class IrpfCalculatorTest {
     void multiYear_buyAndSell2024_buy2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 285.925 BRL
-        // sell 2024: 55*3*5.46=900.90, cost=285.925*3=857.775, gain=43.125 → NOT in year
+        // sell 2024: avg at sell date = BUY_2024 only = 2700/10 = 270
+        //   gain = 55*3*5.46 - 270*3 = 900.90 - 810 = 90.90 → NOT in year
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(SELL_2024), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
         assertThat(r.totalCapitalGainsBrl().with(Monetary.getDefaultRounding()))
-                .isEqualTo(Money.of(new BigDecimal("43.12"), MoneyUtil.BRL));
+                .isEqualTo(Money.of(new BigDecimal("90.90"), MoneyUtil.BRL));
     }
 
     // #8: B+S(24) + S(25)
@@ -400,15 +402,14 @@ class IrpfCalculatorTest {
     void multiYear_buyAndSell2024_buyAndSell2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 285.925 BRL
-        // sell 2024: 900.90 - 285.925*3=857.775 = 43.125 → NOT in year
-        // sell 2025: 1998.50 - 285.925*5=1429.625 = 568.875 → in year
+        // sell 2024: avg at date = BUY_2024 only = 270 → gain = 900.90 - 810 = 90.90 → NOT in year
+        // sell 2025: avg at date = BUY_2024+BUY_2025 = 285.925 → gain = 1998.50 - 1429.625 = 568.875 → in year
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(SELL_2024, SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("568.88"), MoneyUtil.BRL));
         assertThat(r.totalCapitalGainsBrl().with(Monetary.getDefaultRounding()))
-                .isEqualTo(Money.of(new BigDecimal("612.00"), MoneyUtil.BRL));
+                .isEqualTo(Money.of(new BigDecimal("659.78"), MoneyUtil.BRL));
     }
 
     // #10: B(24) + B+S(25) + B(26) — calculator must exclude future buys from avg cost
@@ -447,14 +448,15 @@ class IrpfCalculatorTest {
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 3, 15), Money.of(new BigDecimal("5.9000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.9100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 6, 15), Money.of(new BigDecimal("5.8000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.8100"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 285.925 BRL (BUY_2026 excluded)
-        // SELL_2026 excluded from both year and total gains
+        // sell 2024: avg at date = BUY_2024 only = 270 → gain = 90.90
+        // sell 2025: avg at date = BUY_2024+BUY_2025 = 285.925 → gain = 568.88
+        // SELL_2026 excluded, BUY_2026 excluded
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025, BUY_2026), List.of(SELL_2024, SELL_2025, SELL_2026), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("568.88"), MoneyUtil.BRL));
         assertThat(r.totalCapitalGainsBrl().with(Monetary.getDefaultRounding()))
-                .isEqualTo(Money.of(new BigDecimal("612.00"), MoneyUtil.BRL));
+                .isEqualTo(Money.of(new BigDecimal("659.78"), MoneyUtil.BRL));
     }
 
     @Test
@@ -467,9 +469,10 @@ class IrpfCalculatorTest {
 
     // --- calculateDividendsBrl ---
 
-    // d1: (0.75 - 0.05) * 6.0380 = 0.70 * 6.0380 = 4.2266
-    // d2: (1.20 - 0.00) * 5.7100 = 1.20 * 5.7100 = 6.852
-    // total = 4.2266 + 6.852 = 11.0786
+    // d1: gross=0.75*6.0380=4.5285, tax=0.05*6.0380=0.3019
+    // d2: gross=1.20*5.7100=6.852, tax=0.00*5.7100=0
+    // totalGross = 4.5285 + 6.852 = 11.3805
+    // totalTax = 0.3019 + 0 = 0.3019
     static Stream<Arguments> dividendsArgs() {
         return Stream.of(
                 Arguments.of(Named.of("chronological order", List.of(DIV_JAN, DIV_JUN))),
@@ -480,16 +483,19 @@ class IrpfCalculatorTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("dividendsArgs")
     void calculateDividendsBrl_twoDividends(List<Dividend> dividends) {
-        Money result = irpfCalculator.calculateDividendsBrl(dividends, fakePtaxService);
+        DividendsResult result = irpfCalculator.calculateDividendsBrl(dividends, fakePtaxService);
 
-        assertThat(result.with(Monetary.getDefaultRounding()))
-                .isEqualTo(Money.of(new BigDecimal("11.08"), MoneyUtil.BRL));
+        assertThat(result.grossBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("11.38"), MoneyUtil.BRL));
+        assertThat(result.taxBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("0.30"), MoneyUtil.BRL));
     }
 
     @Test
     void calculateDividendsBrl_emptyList() {
-        Money result = irpfCalculator.calculateDividendsBrl(List.of(), fakePtaxService);
+        DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(), fakePtaxService);
 
-        assertThat(result).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.grossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.taxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
     }
 }
