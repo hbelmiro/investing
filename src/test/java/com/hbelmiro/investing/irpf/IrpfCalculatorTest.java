@@ -77,6 +77,17 @@ class IrpfCalculatorTest {
 
     // --- calculateCapitalGains ---
 
+    // | Date       | Op   | Qty | Price | Tax  | PTAX Compra | PTAX Venda |
+    // |------------|------|-----|-------|------|-------------|------------|
+    // | 2025-01-15 | BUY  | 10  | $50   | $0.50| 6.0370      |            |
+    // | 2025-06-15 | SELL | 5   | $70   | $0.35|             | 5.7100     |
+    //
+    // | Result              | Value   |
+    // |---------------------|---------|
+    // | avgCostBrl          | 302.15  |
+    // | sellBrl             | 1998.50 |
+    // | costBrl (5 shares)  | 1510.76 |
+    // | capitalGainsBrl     | 487.74  |
     @Test
     void calculateCapitalGains_sellWithGain() {
         Operation buy = Operation.builder()
@@ -97,17 +108,23 @@ class IrpfCalculatorTest {
                 .amount(new BigDecimal("5"))
                 .build();
 
-        // buy: costBrl = (50 * 10 + 0.50) * 6.0370 = 500.50 * 6.0370 = 3021.5185
-        // runningAvgCostBrl = 3021.5185 / 10 = 302.15185
-        // sell: sellBrl = 70 * 5 * 5.7100 = 1998.50
-        //       costBrl = 302.15185 * 5 = 1510.75925
-        //       gain = 1998.50 - 1510.75925 = 487.74075
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(List.of(buy), List.of(sell), 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("487.74"), MoneyUtil.BRL));
     }
 
+    // | Date       | Op   | Qty | Price | Tax | PTAX Compra | PTAX Venda |
+    // |------------|------|-----|-------|-----|-------------|------------|
+    // | 2025-01-15 | BUY  | 10  | $100  | $0  | 6.0370      |            |
+    // | 2025-06-15 | SELL | 5   | $80   | $0  |             | 5.7100     |
+    //
+    // | Result              | Value    |
+    // |---------------------|----------|
+    // | avgCostBrl          | 603.70   |
+    // | sellBrl             | 2284.00  |
+    // | costBrl (5 shares)  | 3018.50  |
+    // | capitalGainsBrl     | -734.50  |
     @Test
     void calculateCapitalGains_sellWithLoss() {
         Operation buy = Operation.builder()
@@ -128,17 +145,21 @@ class IrpfCalculatorTest {
                 .amount(new BigDecimal("5"))
                 .build();
 
-        // buy: costBrl = (100 * 10) * 6.0370 = 6037.00
-        // runningAvgCostBrl = 6037.00 / 10 = 603.70
-        // sell: sellBrl = 80 * 5 * 5.7100 = 2284.00
-        //       costBrl = 603.70 * 5 = 3018.50
-        //       gain = 2284.00 - 3018.50 = -734.50
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(List.of(buy), List.of(sell), 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("-734.50"), MoneyUtil.BRL));
     }
 
+    // | Date       | Op  | Qty | Price | PTAX Compra |
+    // |------------|-----|-----|-------|-------------|
+    // | 2025-01-15 | BUY | 10  | $50   | 6.0370      |
+    //
+    // | Result          | Value  |
+    // |-----------------|--------|
+    // | capitalGainsBrl | 0      |
+    // | avgCostBrl      | 301.85 |
+    // | avgCostUsd      | 50.00  |
     @Test
     void calculateCapitalGains_noSells() {
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(List.of(BUY_JAN), List.of(), 2025, fakePtaxService);
@@ -146,23 +167,27 @@ class IrpfCalculatorTest {
         assertThat(result.capitalGainsBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
         assertThat(result.avgCostBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("301.85"), MoneyUtil.BRL));
-        // avgCostUsd: (50*10+0)/10 = 50.00
         assertThat(result.avgCostUsd().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("50.00"), MoneyUtil.USD));
     }
 
-    // BUY_JAN: 10 shares @ $50, ptaxCompra=6.0370 → costBrl=3018.50, costUsd=500
-    // BUY_MAR: 10 shares @ $60, ptaxCompra=5.5000 → costBrl=3300.00, costUsd=600
+    // | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
+    // |------------|------|-----|-------|-------------|------------|
+    // | 2025-01-15 | BUY  | 10  | $50   | 6.0370      |            |
+    // | 2025-02-15 | SELL | 5   | $55   |             | 5.8100     |
+    // | 2025-03-15 | BUY  | 10  | $60   | 5.5000      |            |
+    // | 2025-06-15 | SELL | 5   | $70   |             | 5.7100     |
     //
-    // Point-in-time avg: each sell uses avg from buys up to that sell date.
-    // SELL_FEB (Feb 15): buys up to Feb 15 = BUY_JAN only → avg=3018.50/10=301.85
-    //   gain = (55*5*5.81) - (301.85*5) = 1597.75 - 1509.25 = 88.50
-    // SELL_JUN (Jun 15): buys up to Jun 15 = BUY_JAN + BUY_MAR → avg=6318.50/20=315.925
-    //   gain = (70*5*5.71) - (315.925*5) = 1998.50 - 1579.625 = 418.875
-    // totalGains = 88.50 + 418.875 = 507.375 → 507.38
+    // | Sell       | Avg at sell date      | SellBrl  | CostBrl  | Gain    |
+    // |------------|-----------------------|----------|----------|---------|
+    // | 2025-02-15 | 3018.50/10 = 301.85   | 1597.75  | 1509.25  | 88.50   |
+    // | 2025-06-15 | 6318.50/20 = 315.925  | 1998.50  | 1579.63  | 418.88  |
     //
-    // avgCostBrl at endOfYear (for Bens e Direitos) = all buys = 315.92
-    // avgCostUsd at endOfYear = (500+600)/20 = 55.00
+    // | Result          | Value  |
+    // |-----------------|--------|
+    // | capitalGainsBrl | 507.38 |
+    // | avgCostBrl      | 315.92 |
+    // | avgCostUsd      | 55.00  |
     static Stream<Arguments> multipleBuysAndSellsArgs() {
         return Stream.of(
                 Arguments.of(Named.of("chronological order", List.of(BUY_JAN, BUY_MAR)), List.of(SELL_FEB, SELL_JUN)),
@@ -183,6 +208,11 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("55.00"), MoneyUtil.USD));
     }
 
+    // | Date       | Op   | Qty | Price |
+    // |------------|------|-----|-------|
+    // | 2025-01-15 | BUY  | 10  | $50   |
+    // | 2025-06-15 | SELL | 11  | $70   |
+    // → error: sell exceeds position
     @Test
     void calculateCapitalGains_sellMoreThanHeld() {
         Operation sell = Operation.builder()
@@ -198,6 +228,10 @@ class IrpfCalculatorTest {
                 .isThrownBy(() -> irpfCalculator.calculateCapitalGains(List.of(BUY_JAN), List.of(sell), 2025, fakePtaxService));
     }
 
+    // | Date       | Op   | Qty | Price |
+    // |------------|------|-----|-------|
+    // | 2025-01-15 | SELL | 5   | $70   |
+    // → error: no buys
     @Test
     void calculateCapitalGains_sellBeforeBuy() {
         Operation sell = Operation.builder()
@@ -213,6 +247,28 @@ class IrpfCalculatorTest {
                 .isThrownBy(() -> irpfCalculator.calculateCapitalGains(List.of(), List.of(sell), 2025, fakePtaxService));
     }
 
+    // | Date       | Op   | Qty | Price |
+    // |------------|------|-----|-------|
+    // | 2025-02-15 | SELL | 5   | $55   |
+    // | 2025-03-15 | BUY  | 10  | $60   |
+    // → error: at sell date, 0 shares bought
+    @Test
+    void calculateCapitalGains_sellExceedsCumulativeBoughtAtThatDate() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(
+                        List.of(BUY_MAR), List.of(SELL_FEB), 2025, fakePtaxService));
+    }
+
+    // | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
+    // |------------|------|-----|-------|-------------|------------|
+    // | 2025-01-15 | BUY  | 10  | $50   | 6.0370      |            |
+    // | 2025-01-15 | SELL | 5   | $55   |             | 6.0380     |
+    //
+    // | Result          | Value  |
+    // |-----------------|--------|
+    // | avgCostBrl      | 301.85 |
+    // | sellBrl         | 1660.45|
+    // | capitalGainsBrl | 151.20 |
     @Test
     void calculateCapitalGains_sameDateBuyAndSell() {
         Operation buy = Operation.builder()
@@ -233,15 +289,21 @@ class IrpfCalculatorTest {
                 .amount(new BigDecimal("5"))
                 .build();
 
-        // buy: costBrl = 50*10 * 6.0370 = 3018.50, runningAvg = 301.85
-        // sell: sellBrl = 55*5 * 6.0380 = 1660.45, costBrl = 301.85*5 = 1509.25
-        // gain = 1660.45 - 1509.25 = 151.20
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(List.of(buy), List.of(sell), 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("151.20"), MoneyUtil.BRL));
     }
 
+    // | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
+    // |------------|------|-----|-------|-------------|------------|
+    // | 2025-01-15 | BUY  | 10  | $50   | 6.0370      |            |
+    // | 2025-06-15 | SELL | 10  | $70   |             | 5.7100     |
+    //
+    // | Result          | Value  |
+    // |-----------------|--------|
+    // | avgCostBrl      | 301.85 |
+    // | capitalGainsBrl | 978.50 |
     @Test
     void calculateCapitalGains_sellAllShares() {
         Operation sell = Operation.builder()
@@ -253,9 +315,6 @@ class IrpfCalculatorTest {
                 .amount(BigDecimal.TEN)
                 .build();
 
-        // avgCostBrl = 50*10 * 6.0370 / 10 = 301.85 (buy-only, unchanged by sell)
-        // sell all: sellBrl = 70*10 * 5.7100 = 3997.00, costBrl = 301.85*10 = 3018.50
-        // gain = 3997.00 - 3018.50 = 978.50
         CapitalGainsResult result = irpfCalculator.calculateCapitalGains(List.of(BUY_JAN), List.of(sell), 2025, fakePtaxService);
 
         assertThat(result.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -265,13 +324,15 @@ class IrpfCalculatorTest {
     }
 
     // --- Multi-year capital gains matrix (target year=2025) ---
-    // Operations used:
-    //   BUY_2024:  2024-06-15, 10 @ $50, ptaxCompra=5.4000 → costBrl=2700.00
-    //   SELL_2024: 2024-09-15, 3 @ $55,  ptaxVenda=5.4600  → sellBrl=900.90, cost=3*avgCost
-    //   BUY_2025:  2025-01-15, 10 @ $50, ptaxCompra=6.0370 → costBrl=3018.50 (= BUY_JAN)
-    //   SELL_2025: 2025-06-15, 5 @ $70,  ptaxVenda=5.7100  → sellBrl=1998.50, cost=5*avgCost (= SELL_JUN)
-    //   BUY_2026:  2026-03-15, 8 @ $65,  ptaxCompra=5.9000 → costBrl=3068.00
-    //   SELL_2026: 2026-06-15, 4 @ $75,  ptaxVenda=5.8000  → sellBrl=1740.00, cost=4*avgCost
+    //
+    // | Constant   | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
+    // |------------|------------|------|-----|-------|-------------|------------|
+    // | BUY_2024   | 2024-06-15 | BUY  | 10  | $50   | 5.4000      |            |
+    // | SELL_2024  | 2024-09-15 | SELL | 3   | $55   |             | 5.4600     |
+    // | BUY_2025   | 2025-01-15 | BUY  | 10  | $50   | 6.0370      |            |
+    // | SELL_2025  | 2025-06-15 | SELL | 5   | $70   |             | 5.7100     |
+    // | BUY_2026   | 2026-03-15 | BUY  | 8   | $65   | 5.9000      |            |
+    // | SELL_2026  | 2026-06-15 | SELL | 4   | $75   |             | 5.8000     |
 
     private static final Operation BUY_2024 = Operation.builder()
             .date(LocalDate.of(2024, 6, 15)).type(OperationType.BUY).asset(AAPL)
@@ -297,7 +358,7 @@ class IrpfCalculatorTest {
             .price(Money.of(75, MoneyUtil.USD)).tax(Money.of(BigDecimal.ZERO, MoneyUtil.USD))
             .amount(new BigDecimal("4")).build();
 
-    // #1: only B in 2025
+    // #1 | 2025: B | Expected: yearGains=0, totalGains=0, avgUsd=50.00
     @Test
     void multiYear_onlyBuy2025() {
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
@@ -308,11 +369,9 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("50.00"), MoneyUtil.USD));
     }
 
-    // #2: B+S in 2025
+    // #2 | 2025: B+S | Expected: yearGains=489.25, yearGains=totalGains
     @Test
     void multiYear_buyAndSell2025() {
-        // avg = 3018.50/10 = 301.85 BRL, 50 USD
-        // sell: 1998.50 - 301.85*5 = 1998.50 - 1509.25 = 489.25
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2025), List.of(SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -320,7 +379,7 @@ class IrpfCalculatorTest {
         assertThat(r.capitalGainsBrl()).isEqualTo(r.totalCapitalGainsBrl());
     }
 
-    // #3: only S in 2025 → error (no buys)
+    // #3 | 2025: S only | Expected: error (no buys)
     @Test
     void multiYear_onlySell2025_nobuys() {
         assertThatExceptionOfType(IllegalStateException.class)
@@ -328,11 +387,10 @@ class IrpfCalculatorTest {
                         List.of(), List.of(SELL_2025), 2025, fakePtaxService));
     }
 
-    // #4: B(24) + B(25)
+    // #4 | 2024: B | 2025: B | Expected: yearGains=0, totalGains=0, avgUsd=50.00
     @Test
     void multiYear_buy2024_buy2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 5718.50/20 = 285.925 BRL, (500+500)/20 = 50 USD
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
@@ -341,12 +399,10 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("50.00"), MoneyUtil.USD));
     }
 
-    // #5: B(24) + S(25)
+    // #5 | 2024: B | 2025: S | Expected: yearGains=648.50, yearGains=totalGains
     @Test
     void multiYear_buy2024_sell2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
-        // avg = 2700/10 = 270 BRL
-        // sell 2025: 1998.50 - 270*5 = 1998.50 - 1350 = 648.50
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024), List.of(SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -354,12 +410,10 @@ class IrpfCalculatorTest {
         assertThat(r.capitalGainsBrl()).isEqualTo(r.totalCapitalGainsBrl());
     }
 
-    // #6: B(24) + B+S(25)
+    // #6 | 2024: B | 2025: B+S | Expected: yearGains=568.88, yearGains=totalGains
     @Test
     void multiYear_buy2024_buyAndSell2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 285.925 BRL
-        // sell 2025: 1998.50 - 285.925*5 = 1998.50 - 1429.625 = 568.875 → 568.88
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -367,13 +421,17 @@ class IrpfCalculatorTest {
         assertThat(r.capitalGainsBrl()).isEqualTo(r.totalCapitalGainsBrl());
     }
 
-    // #7: B+S(24) + B(25)
+    // #7 | 2024: B+S | 2025: B
+    //
+    // | Sell       | Avg at sell date (buys-only) | SellBrl | CostBrl | Gain  | In year? |
+    // |------------|-----------------------------|---------|---------|-------|----------|
+    // | 2024-09-15 | 2700/10 = 270               | 900.90  | 810.00  | 90.90 | no       |
+    //
+    // Expected: yearGains=0, totalGains=90.90
     @Test
     void multiYear_buyAndSell2024_buy2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
-        // sell 2024: avg at sell date = BUY_2024 only = 2700/10 = 270
-        //   gain = 55*3*5.46 - 270*3 = 900.90 - 810 = 90.90 → NOT in year
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(SELL_2024), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
@@ -381,14 +439,18 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("90.90"), MoneyUtil.BRL));
     }
 
-    // #8: B+S(24) + S(25)
+    // #8 | 2024: B+S | 2025: S
+    //
+    // | Sell       | Avg at sell date | SellBrl  | CostBrl | Gain   | In year? |
+    // |------------|-----------------|----------|---------|--------|----------|
+    // | 2024-09-15 | 270             | 900.90   | 810.00  | 90.90  | no       |
+    // | 2025-06-15 | 270             | 1998.50  | 1350.00 | 648.50 | yes      |
+    //
+    // Expected: yearGains=648.50, totalGains=739.40
     @Test
     void multiYear_buyAndSell2024_sell2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
-        // avg = 2700/10 = 270 BRL
-        // sell 2024: 900.90 - 270*3=810 = 90.90 → NOT in year
-        // sell 2025: 1998.50 - 270*5=1350 = 648.50 → in year
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024), List.of(SELL_2024, SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -397,13 +459,18 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("739.40"), MoneyUtil.BRL));
     }
 
-    // #9: B+S(24) + B+S(25)
+    // #9 | 2024: B+S | 2025: B+S
+    //
+    // | Sell       | Avg at sell date          | SellBrl  | CostBrl  | Gain   | In year? |
+    // |------------|--------------------------|----------|----------|--------|----------|
+    // | 2024-09-15 | BUY_2024 only = 270      | 900.90   | 810.00   | 90.90  | no       |
+    // | 2025-06-15 | BUY_2024+BUY_2025=285.93 | 1998.50  | 1429.63  | 568.88 | yes      |
+    //
+    // Expected: yearGains=568.88, totalGains=659.78
     @Test
     void multiYear_buyAndSell2024_buyAndSell2025() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
-        // sell 2024: avg at date = BUY_2024 only = 270 → gain = 900.90 - 810 = 90.90 → NOT in year
-        // sell 2025: avg at date = BUY_2024+BUY_2025 = 285.925 → gain = 1998.50 - 1429.625 = 568.875 → in year
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025), List.of(SELL_2024, SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -412,13 +479,12 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("659.78"), MoneyUtil.BRL));
     }
 
-    // #10: B(24) + B+S(25) + B(26) — calculator must exclude future buys from avg cost
+    // #10 | 2024: B | 2025: B+S | 2026: B (excluded)
+    // BUY_2026 excluded from avg. Expected: yearGains=568.88, avgUsd=50.00
     @Test
     void multiYear_buy2024_buyAndSell2025_buy2026excluded() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 3, 15), Money.of(new BigDecimal("5.9000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.9100"), MoneyUtil.BRL));
-        // avg = (2700+3018.50)/20 = 285.925 BRL (BUY_2026 excluded from avg)
-        // sell 2025: 568.88
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025, BUY_2026), List.of(SELL_2025), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -427,13 +493,13 @@ class IrpfCalculatorTest {
                 .isEqualTo(Money.of(new BigDecimal("50.00"), MoneyUtil.USD));
     }
 
-    // #11: B(24) + B+S(25) + B+S(26) — calculator must exclude future buys and sells
+    // #11 | 2024: B | 2025: B+S | 2026: B+S (both excluded)
+    // Expected: yearGains=568.88, yearGains=totalGains
     @Test
     void multiYear_buy2024_buyAndSell2025_buyAndSell2026excluded() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 3, 15), Money.of(new BigDecimal("5.9000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.9100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 6, 15), Money.of(new BigDecimal("5.8000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.8100"), MoneyUtil.BRL));
-        // BUY_2026 excluded from avg, SELL_2026 excluded from gains
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025, BUY_2026), List.of(SELL_2025, SELL_2026), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -441,16 +507,21 @@ class IrpfCalculatorTest {
         assertThat(r.capitalGainsBrl()).isEqualTo(r.totalCapitalGainsBrl());
     }
 
-    // #12: B+S(24) + B+S(25) + B+S(26) — future ops excluded
+    // #12 | 2024: B+S | 2025: B+S | 2026: B+S (excluded)
+    //
+    // | Sell       | Avg at sell date     | Gain   | In year? |
+    // |------------|---------------------|--------|----------|
+    // | 2024-09-15 | BUY_2024 only = 270 | 90.90  | no       |
+    // | 2025-06-15 | BUY_2024+2025=285.93| 568.88 | yes      |
+    // | 2026-06-15 | excluded            | —      | —        |
+    //
+    // Expected: yearGains=568.88, totalGains=659.78
     @Test
     void multiYear_allYears_futureExcluded() {
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 3, 15), Money.of(new BigDecimal("5.9000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.9100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2026, 6, 15), Money.of(new BigDecimal("5.8000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.8100"), MoneyUtil.BRL));
-        // sell 2024: avg at date = BUY_2024 only = 270 → gain = 90.90
-        // sell 2025: avg at date = BUY_2024+BUY_2025 = 285.925 → gain = 568.88
-        // SELL_2026 excluded, BUY_2026 excluded
         CapitalGainsResult r = irpfCalculator.calculateCapitalGains(
                 List.of(BUY_2024, BUY_2025, BUY_2026), List.of(SELL_2024, SELL_2025, SELL_2026), 2025, fakePtaxService);
         assertThat(r.capitalGainsBrl().with(Monetary.getDefaultRounding()))
@@ -469,10 +540,15 @@ class IrpfCalculatorTest {
 
     // --- calculateDividendsBrl ---
 
-    // d1: gross=0.75*6.0380=4.5285, tax=0.05*6.0380=0.3019
-    // d2: gross=1.20*5.7100=6.852, tax=0.00*5.7100=0
-    // totalGross = 4.5285 + 6.852 = 11.3805
-    // totalTax = 0.3019 + 0 = 0.3019
+    // | Date       | Gross | Tax  | PTAX Venda | GrossBrl | TaxBrl |
+    // |------------|-------|------|------------|----------|--------|
+    // | 2025-01-15 | $0.75 | $0.05| 6.0380     | 4.53     | 0.30   |
+    // | 2025-06-15 | $1.20 | $0   | 5.7100     | 6.85     | 0      |
+    //
+    // | Result   | Value |
+    // |----------|-------|
+    // | grossBrl | 11.38 |
+    // | taxBrl   | 0.30  |
     static Stream<Arguments> dividendsArgs() {
         return Stream.of(
                 Arguments.of(Named.of("chronological order", List.of(DIV_JAN, DIV_JUN))),

@@ -31,12 +31,24 @@ public final class IrpfCalculator {
                 .sorted(Comparator.comparing(Operation::getDate))
                 .toList();
 
+        List<Operation> sellsUpToYear = sells.stream()
+                .filter(s -> !s.getDate().isAfter(endOfYear))
+                .sorted(Comparator.comparing(Operation::getDate))
+                .toList();
+
         Money yearGains = Money.zero(MoneyUtil.BRL);
         Money totalGains = Money.zero(MoneyUtil.BRL);
-        BigDecimal totalSoldAmount = BigDecimal.ZERO;
+        BigDecimal cumulativeSold = BigDecimal.ZERO;
 
-        for (Operation sell : sells) {
-            if (sell.getDate().isAfter(endOfYear)) continue;
+        for (Operation sell : sellsUpToYear) {
+            cumulativeSold = cumulativeSold.add(sell.getAmount());
+
+            BigDecimal cumulativeBought = cumulativeBoughtAtDate(buysUpToYear, sell.getDate());
+            if (cumulativeSold.compareTo(cumulativeBought) > 0) {
+                throw new IllegalStateException(
+                        "Sell amount exceeds position on " + sell.getDate()
+                        + " (sold: " + cumulativeSold + ", bought: " + cumulativeBought + ")");
+            }
 
             Money avgCostAtSellDate = avgCostBrlAtDate(buysUpToYear, sell.getDate(), ptaxService);
             Money sellBrl = toSellBrl(sell, ptaxService);
@@ -47,22 +59,21 @@ public final class IrpfCalculator {
             if (sell.getDate().getYear() == year) {
                 yearGains = yearGains.add(gain);
             }
-
-            totalSoldAmount = totalSoldAmount.add(sell.getAmount());
-        }
-
-        BigDecimal totalBuyAmount = buysUpToYear.stream()
-                .map(Operation::getAmount)
-                .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
-        if (totalSoldAmount.compareTo(totalBuyAmount) > 0) {
-            throw new IllegalStateException("Total sold (" + totalSoldAmount + ") exceeds total bought (" + totalBuyAmount + ")");
         }
 
         Money avgCostBrl = avgCostBrlAtDate(buysUpToYear, endOfYear, ptaxService);
         Money avgCostUsd = avgCostUsdAtDate(buysUpToYear, endOfYear);
 
         return new CapitalGainsResult(yearGains, totalGains, avgCostBrl, avgCostUsd);
+    }
+
+    private BigDecimal cumulativeBoughtAtDate(List<Operation> sortedBuys, LocalDate date) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Operation buy : sortedBuys) {
+            if (buy.getDate().isAfter(date)) break;
+            total = total.add(buy.getAmount());
+        }
+        return total;
     }
 
     private Money avgCostBrlAtDate(List<Operation> sortedBuys, LocalDate date, PtaxService ptaxService) {

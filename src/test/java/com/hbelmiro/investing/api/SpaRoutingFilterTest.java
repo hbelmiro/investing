@@ -16,6 +16,12 @@ import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// | Path               | Type        | Expected status | Expected body contains |
+// |--------------------|-------------|-----------------|------------------------|
+// | /irpf              | SPA route   | 200             | <div id="root">        |
+// | /some-unknown-route | SPA route   | 200             | <div id="root">        |
+// | /api/irpf/years    | API route   | 200             | starts with [          |
+// | /index.html        | Static file | 200             | <div id="root">        |
 @QuarkusTest
 class SpaRoutingFilterTest {
 

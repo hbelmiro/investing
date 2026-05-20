@@ -33,6 +33,13 @@ abstract class OperationReaderTest {
         this.currencyUnit = reader.getCurrencyUnit();
     }
 
+    // | Date       | Symbol | Qty | Price | Tax  |
+    // |------------|--------|-----|-------|------|
+    // | 15/03/2019 | ITUB3  | 3   | 32.26 | 0.06 |
+    // | 21/03/2019 | MDIA3  | -2  | 43.90 | 0.00 |
+    // | 21/03/2019 | WEGE3  | 7   | 18.55 | 0.00 |
+    //
+    // Expected: 3 operations parsed correctly
     @Test
     void testRead() {
         googleSheetsClient.setCsv("/csv/BuyReader/testRead.csv");
@@ -71,6 +78,13 @@ abstract class OperationReaderTest {
                 .containsExactlyInAnyOrder(op1, op2, op3);
     }
 
+    // | Row | Content                                     |
+    // |-----|---------------------------------------------|
+    // | 1   | 15/03/2019;ITUB3;3;"R$ 32,26";"R$ 0,06"... |
+    // | 2   | (empty line)                                |
+    // | 3   | 21/03/2019;WEGE3;7;"R$ 18,55";"R$ 0,00"... |
+    //
+    // Expected: 2 operations (empty row skipped)
     @Test
     void testRead_skipsEmptyRows() {
         googleSheetsClient.setCsv("/csv/BuyReader/testReadWithEmptyRows.csv");
@@ -81,6 +95,12 @@ abstract class OperationReaderTest {
                 .containsExactlyInAnyOrder("ITUB3", "WEGE3");
     }
 
+    // | Row | Columns present         | Tax column? |
+    // |-----|-------------------------|-------------|
+    // | 1   | date;ITUB3;3;"R$ 32,26" | missing     |
+    // | 2   | date;WEGE3;7;...;tax    | present     |
+    //
+    // Expected: ITUB3 tax defaults to 0
     @Test
     void testRead_defaultsTaxToZeroWhenMissing() {
         googleSheetsClient.setCsv("/csv/BuyReader/testReadWithMissingTax.csv");

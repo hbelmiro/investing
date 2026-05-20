@@ -14,6 +14,9 @@ class CsvGoogleSheetsClientTest {
     @Inject
     CsvGoogleSheetsClient client;
 
+    // | CSV           | Page    | Expected |
+    // |---------------|---------|----------|
+    // | empty.csv     | anyPage | []       |
     @Test
     void read_emptyFile_returnsEmptyList() {
         client.setCsv("/csv/IrpfResource/empty.csv");
@@ -21,6 +24,10 @@ class CsvGoogleSheetsClientTest {
         assertThat(result).isEmpty();
     }
 
+    // | Global CSV    | Page-specific CSV | Read page   | Expected  |
+    // |---------------|-------------------|-------------|-----------|
+    // | testRead.csv  | —                 | OtherPage   | non-empty |
+    // | testRead.csv  | empty.csv         | CustomPage  | []        |
     @Test
     void read_perPageMapping_overridesGlobal() {
         client.setCsv("/csv/BuyReader/testRead.csv");
