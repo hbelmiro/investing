@@ -158,7 +158,7 @@ public class IrpfResource {
                         : Money.zero(MoneyUtil.BRL);
 
                 return new IrpfAssetData(symbol, quantity, avgCostBrl, totalCostBrl, avgCostUsd, totalCostUsd, ptaxRate, capitalGainsBrl, totalCapitalGainsBrl, dividendsBrl, null);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 return IrpfAssetData.error(symbol, e.getMessage());
             }
         }).filter(Objects::nonNull).toList();
