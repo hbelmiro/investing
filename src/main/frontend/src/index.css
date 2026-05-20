@@ -17,6 +17,9 @@ body {
 .navbar {
   background: #1a1a2e;
   padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .navbar-title {
@@ -24,6 +27,16 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   text-decoration: none;
+}
+
+.navbar-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.navbar-link:hover {
+  color: #fff;
 }
 
 .main-content {
@@ -104,6 +117,42 @@ td {
 
 tr:hover td {
   background: #fafafa;
+}
+
+.irpf-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.irpf-controls label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.irpf-controls select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.irpf-error-row td {
+  background: #fef2f2;
+}
+
+.irpf-error-details summary {
+  color: #c0392b;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.irpf-error-details p {
+  margin-top: 0.3rem;
+  color: #555;
+  font-size: 0.85rem;
 }
 
 .error {

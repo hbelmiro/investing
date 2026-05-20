@@ -12,6 +12,10 @@ public class MoneySerializer extends JsonSerializer<Money> {
 
     @Override
     public void serialize(Money value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        gen.writeNumber(value.getNumber().numberValue(BigDecimal.class));
+        if (value == null) {
+            gen.writeNull();
+        } else {
+            gen.writeNumber(value.getNumber().numberValue(BigDecimal.class));
+        }
     }
 }

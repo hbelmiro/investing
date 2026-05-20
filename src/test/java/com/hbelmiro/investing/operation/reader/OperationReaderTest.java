@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static com.hbelmiro.investing.utils.MoneyUtil.toMoney;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class OperationReaderTest {
@@ -68,5 +69,28 @@ abstract class OperationReaderTest {
 
         assertThat(operations)
                 .containsExactlyInAnyOrder(op1, op2, op3);
+    }
+
+    @Test
+    void testRead_skipsEmptyRows() {
+        googleSheetsClient.setCsv("/csv/BuyReader/testReadWithEmptyRows.csv");
+        List<Operation> operations = reader.read();
+
+        assertThat(operations).hasSize(2);
+        assertThat(operations).extracting(op -> op.getAsset().symbol())
+                .containsExactlyInAnyOrder("ITUB3", "WEGE3");
+    }
+
+    @Test
+    void testRead_defaultsTaxToZeroWhenMissing() {
+        googleSheetsClient.setCsv("/csv/BuyReader/testReadWithMissingTax.csv");
+        List<Operation> operations = reader.read();
+
+        assertThat(operations).hasSize(2);
+
+        Operation itub = operations.stream()
+                .filter(op -> op.getAsset().symbol().equals("ITUB3"))
+                .findFirst().orElseThrow();
+        assertThat(itub.getTax()).isEqualTo(toMoney("0", currencyUnit));
     }
 }

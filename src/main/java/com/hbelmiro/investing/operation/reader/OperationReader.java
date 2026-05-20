@@ -50,6 +50,7 @@ abstract class OperationReader {
     public List<Operation> read() {
         try {
             return googleSheetsClient.read(page, RANGE).stream()
+                    .filter(row -> row.size() >= 4 && !row.get(0).toString().isEmpty())
                     .map(this::toOperation)
                     .toList();
         } catch (IOException | GeneralSecurityException e) {
@@ -64,7 +65,7 @@ abstract class OperationReader {
                 .asset(new Asset(row.get(1).toString(), currencyUnit))
                 .amount(new BigDecimal(row.get(2).toString().replace(".", "").replace(",", ".")))
                 .price(toMoney(row.get(3).toString(), currencyUnit))
-                .tax(toMoney(row.get(4).toString(), currencyUnit))
+                .tax(row.size() > 4 ? toMoney(row.get(4).toString(), currencyUnit) : toMoney("0", currencyUnit))
                 .build();
     }
 }

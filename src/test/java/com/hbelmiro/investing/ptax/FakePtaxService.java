@@ -18,10 +18,12 @@ public class FakePtaxService implements PtaxService {
     private static final String DEFAULT_TIMESTAMP_SUFFIX = " 13:00:00.000";
     private final Map<LocalDate, PtaxRate> rates = new HashMap<>();
 
-    @SuppressWarnings("unused")
-    public void setRate(LocalDate date, BigDecimal cotacaoCompra, BigDecimal cotacaoVenda) {
+    public void setRate(LocalDate date, Money cotacaoCompra, Money cotacaoVenda) {
         String dataHoraCotacao = date.format(DateTimeFormatter.ISO_LOCAL_DATE) + DEFAULT_TIMESTAMP_SUFFIX;
-        rates.put(date, new PtaxRate(cotacaoCompra, cotacaoVenda, dataHoraCotacao));
+        rates.put(date, new PtaxRate(
+                cotacaoCompra.getNumber().numberValue(BigDecimal.class),
+                cotacaoVenda.getNumber().numberValue(BigDecimal.class),
+                dataHoraCotacao));
     }
 
     @Override

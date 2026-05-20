@@ -33,12 +33,16 @@ class IrpfResourceTest {
     void setUp() {
         csvGoogleSheetsClient.setCsv("Compras Ações US", "/csv/IrpfResource/us_buys.csv");
         csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells.csv");
+        csvGoogleSheetsClient.setCsv("Compras Renda Fixa US", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Renda Fixa US", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Compras REITS", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Vendas REITS", "/csv/IrpfResource/empty.csv");
         csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends.csv");
 
-        fakePtaxService.setRate(LocalDate.of(2024, 6, 15), new BigDecimal("5.4000"), new BigDecimal("5.4100"));
-        fakePtaxService.setRate(LocalDate.of(2025, 1, 15), new BigDecimal("6.0370"), new BigDecimal("6.0380"));
-        fakePtaxService.setRate(LocalDate.of(2025, 3, 15), new BigDecimal("5.5000"), new BigDecimal("5.5100"));
-        fakePtaxService.setRate(LocalDate.of(2025, 6, 15), new BigDecimal("5.7000"), new BigDecimal("5.7100"));
+        fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 1, 15), Money.of(new BigDecimal("6.0370"), MoneyUtil.BRL), Money.of(new BigDecimal("6.0380"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 3, 15), Money.of(new BigDecimal("5.5000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.5100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 6, 15), Money.of(new BigDecimal("5.7000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.7100"), MoneyUtil.BRL));
     }
 
     @Test
@@ -49,15 +53,20 @@ class IrpfResourceTest {
 
         // AAPL: buys in 2024 + 2025, sell in 2025, dividend in 2025
         // avgCostBrl: (500.50*5.4000 + 300.30*5.5000) / 15 = (2702.70 + 1651.65) / 15 = 290.29
+        // avgCostUsd: (500.50 + 300.30) / 15 = 800.80 / 15 = 53.39 (sell depletes but avg stays)
         // capitalGains: sellBrl(70*3*5.7100=1199.10) - costBrl(290.29*3=870.87) = 328.23
         // quantity: 15 bought - 3 sold = 12
         // totalCostBrl: 290.29 * 12 = 3483.48
+        // totalCostUsd: 53.39 * 12 = 640.68 (sell depletes 3 shares at avg cost)
         // dividendsBrl: (0.75-0.10)*5.7100 = 0.65*5.7100 = 3.71
         IrpfAssetData aapl = result.get(0);
         assertThat(aapl.symbol()).isEqualTo("AAPL");
         assertThat(aapl.quantity()).isEqualByComparingTo(new BigDecimal("12"));
         assertThat(aapl.avgCostBrl()).isEqualTo(brl("290.29"));
         assertThat(aapl.totalCostBrl()).isEqualTo(brl("3483.48"));
+        assertThat(aapl.avgCostUsd()).isEqualTo(usd("53.39"));
+        assertThat(aapl.totalCostUsd()).isEqualTo(usd("640.68"));
+        assertThat(aapl.ptaxRate()).isNotNull();
         assertThat(aapl.capitalGainsBrl()).isEqualTo(brl("328.23"));
         assertThat(aapl.totalDividendsBrl()).isEqualTo(brl("3.71"));
 
@@ -129,7 +138,7 @@ class IrpfResourceTest {
     @Test
     void getUsStocksIrpf_previousYearSellsReduceQuantity() {
         csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells_with_prior_year.csv");
-        fakePtaxService.setRate(LocalDate.of(2024, 9, 15), new BigDecimal("5.4500"), new BigDecimal("5.4600"));
+        fakePtaxService.setRate(LocalDate.of(2024, 9, 15), Money.of(new BigDecimal("5.4500"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4600"), MoneyUtil.BRL));
 
         List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
 
@@ -141,26 +150,20 @@ class IrpfResourceTest {
         // AAPL: 15 bought - 2 sold(2024) - 3 sold(2025) = 10
         assertThat(aapl.quantity()).isEqualByComparingTo(new BigDecimal("10"));
 
-        // Capital gains must reflect that 2024 sell depleted position before 2025 sell
-        // Chronological: buy1(Jun24), sell1(Sep24, NOT summed), buy2(Mar25), sell2(Jun25, summed)
-        // buy1: costBrl=500.50*5.4=2702.70, amount=10, avg=270.27
-        // sell1: depletes 2 shares → totalCost=2162.16, amount=8
-        // buy2: costBrl=300.30*5.5=1651.65 → totalCost=3813.81, amount=13, avg=293.37
-        // sell2: sellBrl=70*3*5.71=1199.10, cost=293.37*3=880.11, gain=318.99
-        assertThat(aapl.capitalGainsBrl()).isEqualTo(brl("318.99"));
+        // avgCostBrl = (2702.70 + 1651.65) / 15 = 290.29 (buy-only, sells don't change avg)
+        // 2025 sell: gain = (70*3*5.71) - (290.29*3) = 1199.10 - 870.87 = 328.23
+        assertThat(aapl.capitalGainsBrl()).isEqualTo(brl("328.23"));
 
-        // avgCostBrl must reflect sell-between-buys position depletion (Receita Federal rules)
-        // sell1 depletes 2 shares at avg=270.27, then buy2 recalculates avg to 293.37
-        assertThat(aapl.avgCostBrl()).isEqualTo(brl("293.37"));
-        assertThat(aapl.totalCostBrl()).isEqualTo(brl("2933.70"));
+        assertThat(aapl.avgCostBrl()).isEqualTo(brl("290.29"));
+        assertThat(aapl.totalCostBrl()).isEqualTo(brl("2902.90"));
     }
 
     @Test
     void getUsStocksIrpf_excludesFullyLiquidatedAssetWithNoYearActivity() {
         csvGoogleSheetsClient.setCsv("Compras Ações US", "/csv/IrpfResource/us_buys_with_liquidated.csv");
         csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells_with_liquidation.csv");
-        fakePtaxService.setRate(LocalDate.of(2024, 3, 15), new BigDecimal("5.0000"), new BigDecimal("5.0100"));
-        fakePtaxService.setRate(LocalDate.of(2024, 6, 15), new BigDecimal("5.4000"), new BigDecimal("5.4100"));
+        fakePtaxService.setRate(LocalDate.of(2024, 3, 15), Money.of(new BigDecimal("5.0000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.0100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
 
         List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
 
@@ -170,7 +173,118 @@ class IrpfResourceTest {
                 .doesNotContain("TSLA");
     }
 
+    @Test
+    void getUsStocksIrpf_includesReits() {
+        csvGoogleSheetsClient.setCsv("Compras REITS", "/csv/IrpfResource/us_reits_buys.csv");
+        csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends_reits.csv");
+
+        fakePtaxService.setRate(LocalDate.of(2025, 2, 15), Money.of(new BigDecimal("5.8000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.8100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 4, 15), Money.of(new BigDecimal("5.6000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.6100"), MoneyUtil.BRL));
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        // VNQ: buy 20 @ $80 + $0.40 tax, ptaxCompra=5.8000 → costBrl=(80*20+0.40)*5.80=9282.32, avg=464.12
+        // dividend: (2.00-0.30)*5.6100 = 1.70*5.6100 = 9.54
+        IrpfAssetData vnq = result.stream().filter(d -> d.symbol().equals("VNQ")).findFirst().orElseThrow();
+        assertThat(vnq.quantity()).isEqualByComparingTo(new BigDecimal("20"));
+        assertThat(vnq.totalDividendsBrl()).isEqualTo(brl("9.54"));
+    }
+
+    @Test
+    void getUsStocksIrpf_includesFixedIncome() {
+        csvGoogleSheetsClient.setCsv("Compras Renda Fixa US", "/csv/IrpfResource/us_fixed_income_buys.csv");
+        csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends_fixed_income.csv");
+
+        fakePtaxService.setRate(LocalDate.of(2025, 1, 10), Money.of(new BigDecimal("6.0000"), MoneyUtil.BRL), Money.of(new BigDecimal("6.0100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 5, 15), Money.of(new BigDecimal("5.5000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.5100"), MoneyUtil.BRL));
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        // TFLO: buy 50 @ $50 + $0.25 tax, ptaxCompra=6.0000 → costBrl=(50*50+0.25)*6.00=15001.50, avg=300.03
+        // dividend: (0.50-0.00)*5.5100 = 2.76
+        IrpfAssetData tflo = result.stream().filter(d -> d.symbol().equals("TFLO")).findFirst().orElseThrow();
+        assertThat(tflo.quantity()).isEqualByComparingTo(new BigDecimal("50"));
+        assertThat(tflo.totalDividendsBrl()).isEqualTo(brl("2.76"));
+    }
+
+    @Test
+    void getUsStocksIrpf_filtersDividendsWithQuestionMarkSymbol() {
+        csvGoogleSheetsClient.setCsv("Compras REITS", "/csv/IrpfResource/us_reits_buys.csv");
+        csvGoogleSheetsClient.setCsv("Compras Renda Fixa US", "/csv/IrpfResource/us_fixed_income_buys.csv");
+        csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends_multi_type.csv");
+
+        fakePtaxService.setRate(LocalDate.of(2025, 1, 10), Money.of(new BigDecimal("6.0000"), MoneyUtil.BRL), Money.of(new BigDecimal("6.0100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 2, 15), Money.of(new BigDecimal("5.8000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.8100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 4, 15), Money.of(new BigDecimal("5.6000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.6100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2025, 5, 15), Money.of(new BigDecimal("5.5000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.5100"), MoneyUtil.BRL));
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .doesNotContain("?");
+    }
+
+    @Test
+    void getAvailableYears_returnsYearsFromEarliestBuyToCurrentYear() {
+        List<Integer> years = irpfResource.getAvailableYears();
+
+        assertThat(years.getFirst()).isEqualTo(2024);
+        assertThat(years.getLast()).isEqualTo(LocalDate.now().getYear());
+        assertThat(years).isSorted();
+        for (int i = 1; i < years.size(); i++) {
+            assertThat(years.get(i)).isEqualTo(years.get(i - 1) + 1);
+        }
+    }
+
+    @Test
+    void getUsStocksIrpf_excludesNearZeroQuantityFromFractionalLiquidation() {
+        csvGoogleSheetsClient.setCsv("Compras Ações US", "/csv/IrpfResource/us_buys_fractional_liquidated.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells_fractional_liquidation.csv");
+        fakePtaxService.setRate(LocalDate.of(2024, 3, 15), Money.of(new BigDecimal("5.0000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.0100"), MoneyUtil.BRL));
+        fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .containsExactly("AAPL", "MSFT")
+                .doesNotContain("ATVI");
+    }
+
+    @Test
+    void getUsStocksIrpf_filtersMalformedSymbolsFromSellsAndDividends() {
+        csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells_with_placeholder.csv");
+        csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends_malformed_symbols.csv");
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .doesNotContain("-", "?", "", "Estorno Impostos sobre Dividendos");
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .contains("AAPL", "MSFT");
+    }
+
+    @Test
+    void getUsStocksIrpf_returnsErrorFieldForAssetWithCalculationFailure() {
+        csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/us_sells_oversell.csv");
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        // AAPL succeeds (sell 3 of 15 is valid)
+        IrpfAssetData aapl = result.stream().filter(d -> d.symbol().equals("AAPL")).findFirst().orElseThrow();
+        assertThat(aapl.error()).isNull();
+        assertThat(aapl.avgCostBrl()).isNotNull();
+
+        // MSFT fails (sell 99 but only 8 bought)
+        IrpfAssetData msft = result.stream().filter(d -> d.symbol().equals("MSFT")).findFirst().orElseThrow();
+        assertThat(msft.error()).isNotNull();
+        assertThat(msft.error()).contains("exceeds total bought");
+    }
+
     private static Money brl(String value) {
         return Money.of(new BigDecimal(value), MoneyUtil.BRL).with(Monetary.getDefaultRounding());
+    }
+
+    private static Money usd(String value) {
+        return Money.of(new BigDecimal(value), MoneyUtil.USD).with(Monetary.getDefaultRounding());
     }
 }

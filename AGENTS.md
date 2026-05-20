@@ -47,7 +47,17 @@ com.hbelmiro.investing
 - Brazilian number formatting: `1.234,56` (dot = thousands separator, comma = decimal). The `FundamentusClient` parses this format explicitly.
 - Fundamentus (`fundamentus.com.br`) is the external data source — it is scraped via JSoup. HTML structure may change without notice, so scraping code is inherently fragile.
 - Google Sheets stores the user's portfolio with read-only access (`SPREADSHEETS_READONLY` scope).
-- Monetary values use JavaMoney/Moneta — use `MoneyUtil` for currency operations.
+- Monetary values use JavaMoney/Moneta — use `MoneyUtil` for currency operations. **Always use `Money` for monetary arithmetic (prices, costs, gains, exchange rates), never extract to raw `BigDecimal` for intermediate calculations.** `BigDecimal` subtraction produces floating-point artifacts (e.g., `2.2E-16` instead of `0`); `Money` handles precision correctly. Share quantities (`BigDecimal`) are not monetary values.
+
+## IRPF Calculation Rules (Receita Federal)
+
+Per Receita Federal (https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido):
+
+- **Average cost (custo médio ponderado):** simple weighted average of ALL buys:
+  `sum(buy price × buy quantity + tax) / sum(buy quantities)`. Sells do NOT affect the per-unit average.
+- **Capital gains:** `(sell price × amount × PTAX venda) - (avg cost BRL × amount)`.
+  The avg cost used is the buy-only weighted average.
+- **Bens e Direitos:** declare remaining quantity × avg cost at 31/12.
 
 ## Security & Sensitive Data
 

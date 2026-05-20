@@ -32,6 +32,7 @@ public class CsvGoogleSheetsClient implements GoogleSheetsClient {
         try (InputStream inputStream = getClass().getResourceAsStream(csvPath)) {
             if (inputStream != null) {
                 return Arrays.stream(new String(inputStream.readAllBytes()).split(System.lineSeparator()))
+                        .filter(line -> !line.isEmpty())
                         .map(row -> {
                             String[] splitValues = row.split(";");
                             return Arrays.stream(splitValues)
