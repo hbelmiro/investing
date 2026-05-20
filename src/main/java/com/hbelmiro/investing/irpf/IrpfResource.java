@@ -74,6 +74,7 @@ public class IrpfResource {
                 .orElse(LocalDate.now().getYear());
 
         int currentYear = LocalDate.now().getYear();
+        firstYear = Math.min(firstYear, currentYear);
         List<Integer> years = new ArrayList<>();
         for (int y = firstYear; y <= currentYear; y++) {
             years.add(y);
