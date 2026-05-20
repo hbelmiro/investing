@@ -5,8 +5,6 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 1
-    ignore:
-      - dependency-name: "org.apache.maven.plugins:maven-compiler-plugin"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

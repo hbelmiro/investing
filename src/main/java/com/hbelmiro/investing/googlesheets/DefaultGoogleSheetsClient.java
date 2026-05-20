@@ -24,6 +24,8 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 @Dependent
 @UnlessBuildProfile("test")
 public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
@@ -62,7 +64,7 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
         }
 
         GoogleClientSecrets clientSecrets;
-        try (InputStreamReader reader = new InputStreamReader(in)) {
+        try (InputStreamReader reader = new InputStreamReader(in, UTF_8)) {
             clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
         }
 
@@ -88,6 +90,6 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
                     .execute()
                     .getValues();
         }
-        return cache;
+        return Collections.unmodifiableList(cache);
     }
 }

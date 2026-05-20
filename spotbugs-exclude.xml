@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Money (org.javamoney.moneta.Money) is immutable, but SpotBugs flags
+         EI_EXPOSE_REP/EI_EXPOSE_REP2 because it doesn't recognize this from bytecode. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Or>
+            <Class name="com.hbelmiro.investing.Operation"/>
+            <Class name="com.hbelmiro.investing.Operation$Builder"/>
+            <Class name="com.hbelmiro.investing.dividend.Dividend"/>
+            <Class name="com.hbelmiro.investing.irpf.CapitalGainsResult"/>
+            <Class name="com.hbelmiro.investing.irpf.IrpfAssetData"/>
+            <Class name="com.hbelmiro.investing.ptax.BcbPtaxResponse"/>
+        </Or>
+    </Match>
+</FindBugsFilter>
