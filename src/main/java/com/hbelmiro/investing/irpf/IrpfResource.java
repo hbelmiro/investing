@@ -132,16 +132,15 @@ public class IrpfResource {
                 Money totalCapitalGainsBrl = gainsResult.totalCapitalGainsBrl().with(rounding);
                 Money dividendsBrl = irpfCalculator.calculateDividendsBrl(dividends, ptaxService).with(rounding);
 
-                Money totalBought = symbolBuys.stream()
+                BigDecimal totalBought = symbolBuys.stream()
                         .filter(op -> !op.getDate().isAfter(endOfYear))
-                        .map(op -> Money.of(op.getAmount(), MoneyUtil.USD))
-                        .reduce(Money::add).orElse(Money.zero(MoneyUtil.USD));
-                Money totalSold = symbolSells.stream()
+                        .map(Operation::getAmount)
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalSold = symbolSells.stream()
                         .filter(op -> !op.getDate().isAfter(endOfYear))
-                        .map(op -> Money.of(op.getAmount(), MoneyUtil.USD))
-                        .reduce(Money::add).orElse(Money.zero(MoneyUtil.USD));
+                        .map(Operation::getAmount)
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal quantity = totalBought.subtract(totalSold)
-                        .getNumber().numberValue(BigDecimal.class)
                         .setScale(5, java.math.RoundingMode.HALF_UP)
                         .stripTrailingZeros();
 
