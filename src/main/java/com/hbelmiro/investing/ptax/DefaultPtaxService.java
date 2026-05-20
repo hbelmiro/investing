@@ -24,14 +24,22 @@ public class DefaultPtaxService implements PtaxService {
     private static final String API_RESPONSE_FORMAT = "json";
 
     private final BcbPtaxRestClient restClient;
-    private final Map<LocalDate, PtaxRate> cache = Collections.synchronizedMap(
-            new LinkedHashMap<>(16, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<LocalDate, PtaxRate> eldest) {
-                    return size() > MAX_CACHE_SIZE;
-                }
-            }
-    );
+    private final Map<LocalDate, PtaxRate> cache = Collections.synchronizedMap(new BoundedLruMap<>(MAX_CACHE_SIZE));
+
+    private static class BoundedLruMap<K, V> extends LinkedHashMap<K, V> {
+        private static final long serialVersionUID = 1L;
+        private final int maxSize;
+
+        BoundedLruMap(int maxSize) {
+            super(16, 0.75f, true);
+            this.maxSize = maxSize;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+            return size() > maxSize;
+        }
+    }
 
     @Inject
     DefaultPtaxService(@RestClient BcbPtaxRestClient restClient) {

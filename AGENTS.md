@@ -58,5 +58,5 @@ com.hbelmiro.investing
 ## CI/CD
 
 - **Maven CI**: Runs on pushes and PRs to `main`. Java 25, Temurin distribution, Maven caching.
-- **Dependabot**: Daily Maven dependency PRs, weekly GitHub Actions PRs. Auto-merged after CI passes. `maven-compiler-plugin` is excluded from updates (pinned intentionally).
+- **Dependabot**: Daily Maven dependency PRs, weekly GitHub Actions PRs. Auto-merged after CI passes.
 - **CodeQL**: Security analysis on pushes, PRs, and a weekly Saturday schedule. Uses `security-and-quality` query suite for Java.
