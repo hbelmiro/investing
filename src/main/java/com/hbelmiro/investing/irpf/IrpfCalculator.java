@@ -1,7 +1,6 @@
 package com.hbelmiro.investing.irpf;
 
 import com.hbelmiro.investing.Operation;
-import com.hbelmiro.investing.OperationType;
 import com.hbelmiro.investing.dividend.Dividend;
 import com.hbelmiro.investing.ptax.PtaxService;
 import com.hbelmiro.investing.utils.MoneyUtil;
@@ -9,24 +8,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
- * IRPF tax calculations per Receita Federal rules (IN DPRF 19/1992).
+ * IRPF tax calculations per Receita Federal rules.
  *
- * <p><b>Average cost (custo medio ponderado):</b> weighted average of all buy costs, recalculated
- * on each new purchase. Sells deplete the position at the current average cost but do not change
- * the per-unit average; subsequent buys blend with the remaining position.
- * See: <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido">Ganho Liquido — Receita Federal</a>
- *
- * <p><b>Capital gains:</b> difference between sell proceeds (price x amount x PTAX venda) and
- * cost basis (running avg cost x amount). Buys and sells are processed chronologically to
- * maintain accurate position state.
- *
- * <p><b>Dividends:</b> net value (value - withholding tax) converted at PTAX venda on the
- * payment date.
+ * @see <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido">Ganho Líquido — Receita Federal</a>
  */
 @ApplicationScoped
 public final class IrpfCalculator {
@@ -35,66 +24,116 @@ public final class IrpfCalculator {
     }
 
     public CapitalGainsResult calculateCapitalGains(List<Operation> buys, List<Operation> sells, int year, PtaxService ptaxService) {
-        Money totalCostBrl = Money.zero(MoneyUtil.BRL);
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        Money totalGains = Money.zero(MoneyUtil.BRL);
+        LocalDate endOfYear = LocalDate.of(year, 12, 31);
 
-        List<Operation> allOps = Stream.concat(buys.stream(), sells.stream())
+        List<Operation> buysUpToYear = buys.stream()
+                .filter(b -> !b.getDate().isAfter(endOfYear))
                 .sorted(Comparator.comparing(Operation::getDate))
                 .toList();
 
-        for (Operation op : allOps) {
-            if (op.getType() == OperationType.BUY) {
-                Money costBrl = toCostBrl(op, ptaxService);
-                totalCostBrl = totalCostBrl.add(costBrl);
-                totalAmount = totalAmount.add(op.getAmount());
-            } else {
-                if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new IllegalStateException("Sell without prior buy position on " + op.getDate());
-                }
-                if (op.getAmount().compareTo(totalAmount) > 0) {
-                    throw new IllegalStateException("Sell amount exceeds current position on " + op.getDate());
-                }
-                Money runningAvgCostBrl = totalCostBrl.divide(totalAmount);
-                BigDecimal sellPriceUsd = op.getPrice().getNumber().numberValue(BigDecimal.class);
-                BigDecimal ptaxVenda = ptaxService.getCotacaoVenda(op.getDate()).getNumber().numberValue(BigDecimal.class);
-                Money sellBrl = Money.of(sellPriceUsd.multiply(op.getAmount()).multiply(ptaxVenda), MoneyUtil.BRL);
-                Money costBrl = runningAvgCostBrl.multiply(op.getAmount());
-                if (op.getDate().getYear() == year) {
-                    totalGains = totalGains.add(sellBrl.subtract(costBrl));
-                }
+        List<Operation> sellsUpToYear = sells.stream()
+                .filter(s -> !s.getDate().isAfter(endOfYear))
+                .sorted(Comparator.comparing(Operation::getDate))
+                .toList();
 
-                totalCostBrl = totalCostBrl.subtract(runningAvgCostBrl.multiply(op.getAmount()));
-                totalAmount = totalAmount.subtract(op.getAmount());
+        Money yearGains = Money.zero(MoneyUtil.BRL);
+        Money totalGains = Money.zero(MoneyUtil.BRL);
+        BigDecimal cumulativeSold = BigDecimal.ZERO;
+
+        for (Operation sell : sellsUpToYear) {
+            cumulativeSold = cumulativeSold.add(sell.getAmount());
+
+            BigDecimal cumulativeBought = cumulativeBoughtAtDate(buysUpToYear, sell.getDate());
+            if (cumulativeSold.compareTo(cumulativeBought) > 0) {
+                throw new IllegalStateException(
+                        "Sell amount exceeds position on " + sell.getDate()
+                        + " (sold: " + cumulativeSold + ", bought: " + cumulativeBought + ")");
+            }
+
+            Money avgCostAtSellDate = avgCostBrlAtDate(buysUpToYear, sell.getDate(), ptaxService);
+            Money sellBrl = toSellBrl(sell, ptaxService);
+            Money costBrl = avgCostAtSellDate.multiply(sell.getAmount());
+            Money gain = sellBrl.subtract(costBrl);
+
+            totalGains = totalGains.add(gain);
+            if (sell.getDate().getYear() == year) {
+                yearGains = yearGains.add(gain);
             }
         }
 
-        Money avgCostBrl = totalAmount.compareTo(BigDecimal.ZERO) > 0
-                ? totalCostBrl.divide(totalAmount)
-                : Money.zero(MoneyUtil.BRL);
+        Money avgCostBrl = avgCostBrlAtDate(buysUpToYear, endOfYear, ptaxService);
+        Money avgCostUsd = avgCostUsdAtDate(buysUpToYear, endOfYear);
 
-        return new CapitalGainsResult(totalGains, avgCostBrl);
+        return new CapitalGainsResult(yearGains, totalGains, avgCostBrl, avgCostUsd);
     }
 
-    public Money calculateDividendsBrl(List<Dividend> dividends, PtaxService ptaxService) {
-        if (dividends.isEmpty()) {
-            return Money.zero(MoneyUtil.BRL);
-        }
-
-        Money total = Money.zero(MoneyUtil.BRL);
-        for (Dividend d : dividends) {
-            BigDecimal netUsd = d.value().subtract(d.tax()).getNumber().numberValue(BigDecimal.class);
-            BigDecimal ptaxVenda = ptaxService.getCotacaoVenda(d.date()).getNumber().numberValue(BigDecimal.class);
-            total = total.add(Money.of(netUsd.multiply(ptaxVenda), MoneyUtil.BRL));
+    private BigDecimal cumulativeBoughtAtDate(List<Operation> sortedBuys, LocalDate date) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Operation buy : sortedBuys) {
+            if (buy.getDate().isAfter(date)) break;
+            total = total.add(buy.getAmount());
         }
         return total;
     }
 
+    private Money avgCostBrlAtDate(List<Operation> sortedBuys, LocalDate date, PtaxService ptaxService) {
+        Money totalCost = Money.zero(MoneyUtil.BRL);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (Operation buy : sortedBuys) {
+            if (buy.getDate().isAfter(date)) break;
+            totalCost = totalCost.add(toCostBrl(buy, ptaxService));
+            totalAmount = totalAmount.add(buy.getAmount());
+        }
+
+        return totalAmount.compareTo(BigDecimal.ZERO) > 0
+                ? totalCost.divide(totalAmount)
+                : Money.zero(MoneyUtil.BRL);
+    }
+
+    private Money avgCostUsdAtDate(List<Operation> sortedBuys, LocalDate date) {
+        Money totalCost = Money.zero(MoneyUtil.USD);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (Operation buy : sortedBuys) {
+            if (buy.getDate().isAfter(date)) break;
+            totalCost = totalCost.add(toCostUsd(buy));
+            totalAmount = totalAmount.add(buy.getAmount());
+        }
+
+        return totalAmount.compareTo(BigDecimal.ZERO) > 0
+                ? totalCost.divide(totalAmount)
+                : Money.zero(MoneyUtil.USD);
+    }
+
+    public DividendsResult calculateDividendsBrl(List<Dividend> dividends, PtaxService ptaxService) {
+        Money grossBrl = Money.zero(MoneyUtil.BRL);
+        Money taxBrl = Money.zero(MoneyUtil.BRL);
+
+        for (Dividend d : dividends) {
+            Money ptaxVenda = ptaxService.getCotacaoVenda(d.date());
+            grossBrl = grossBrl.add(convertUsdToBrl(d.value(), ptaxVenda));
+            taxBrl = taxBrl.add(convertUsdToBrl(d.tax(), ptaxVenda));
+        }
+
+        return new DividendsResult(grossBrl, taxBrl);
+    }
+
+    private Money toCostUsd(Operation buy) {
+        return buy.getPrice().multiply(buy.getAmount()).add(buy.getTax());
+    }
+
     private Money toCostBrl(Operation buy, PtaxService ptaxService) {
-        BigDecimal costUsd = buy.getPrice().getNumber().numberValue(BigDecimal.class)
-                .multiply(buy.getAmount())
-                .add(buy.getTax().getNumber().numberValue(BigDecimal.class));
-        BigDecimal ptaxCompra = ptaxService.getCotacaoCompra(buy.getDate()).getNumber().numberValue(BigDecimal.class);
-        return Money.of(costUsd.multiply(ptaxCompra), MoneyUtil.BRL);
+        Money costUsd = toCostUsd(buy);
+        return convertUsdToBrl(costUsd, ptaxService.getCotacaoCompra(buy.getDate()));
+    }
+
+    private Money toSellBrl(Operation sell, PtaxService ptaxService) {
+        Money sellUsd = sell.getPrice().multiply(sell.getAmount());
+        return convertUsdToBrl(sellUsd, ptaxService.getCotacaoVenda(sell.getDate()));
+    }
+
+    private Money convertUsdToBrl(Money usdAmount, Money ptaxRate) {
+        return Money.of(usdAmount.multiply(ptaxRate.getNumber()).getNumber(), MoneyUtil.BRL);
     }
 }

@@ -47,7 +47,34 @@ com.hbelmiro.investing
 - Brazilian number formatting: `1.234,56` (dot = thousands separator, comma = decimal). The `FundamentusClient` parses this format explicitly.
 - Fundamentus (`fundamentus.com.br`) is the external data source — it is scraped via JSoup. HTML structure may change without notice, so scraping code is inherently fragile.
 - Google Sheets stores the user's portfolio with read-only access (`SPREADSHEETS_READONLY` scope).
-- Monetary values use JavaMoney/Moneta — use `MoneyUtil` for currency operations.
+- Monetary values use JavaMoney/Moneta — use `MoneyUtil` for currency operations. **Always use `Money` for monetary arithmetic (prices, costs, gains, exchange rates), never extract to raw `BigDecimal` for intermediate calculations.** `BigDecimal` subtraction produces floating-point artifacts (e.g., `2.2E-16` instead of `0`); `Money` handles precision correctly. Share quantities (`BigDecimal`) are not monetary values.
+
+## IRPF Calculation Rules (Receita Federal)
+
+Per Receita Federal (https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/ganho-liquido):
+
+- **Average buy cost (custo médio de aquisição):** weighted average of buys only, from the
+  beginning of operations up to a given date. Sells do NOT affect it.
+  Formula: `sum(buy price × buy quantity + tax) / sum(buy quantities)` for all buys up to that date.
+  Applies to both BRL (using PTAX compra on buy date) and USD.
+
+- **Capital gains per sell:** each sell uses the avg buy cost **as of that sell's date** — only
+  buys up to that date are included. Future buys do not retroactively change prior sells.
+  Formula: `(sell price × amount × PTAX venda) - (avg buy cost BRL at sell date × amount)`.
+
+- **Year capital gains (ganho de capital do ano):** sum of capital gains from sells in that
+  specific year only.
+
+- **Total capital gains (ganho de capital total):** sum of capital gains from all sells up to
+  31/12 of that year (including prior years).
+
+- **Average cost for Bens e Direitos:** avg buy cost at 31/12 (all buys up to end of year).
+  Declared as: remaining quantity × avg cost.
+
+- **Remaining quantity:** total bought − total sold up to 31/12.
+
+- **Dividends:** net value (value − withholding tax) converted at PTAX venda on payment date.
+  Only dividends in the target year are summed.
 
 ## Security & Sensitive Data
 

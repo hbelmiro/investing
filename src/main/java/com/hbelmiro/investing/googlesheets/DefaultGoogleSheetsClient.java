@@ -5,7 +5,6 @@ import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInsta
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -20,11 +19,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Dependent
 @UnlessBuildProfile("test")
@@ -64,7 +62,7 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
         }
 
         GoogleClientSecrets clientSecrets;
-        try (InputStreamReader reader = new InputStreamReader(in, UTF_8)) {
+        try (InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
             clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
         }
 
@@ -80,7 +78,7 @@ public class DefaultGoogleSheetsClient implements GoogleSheetsClient {
     @Override
     public List<List<Object>> read(String page, String range) throws GeneralSecurityException, IOException {
         if (cache == null) {
-            NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            NetHttpTransport httpTransport = new NetHttpTransport();
             Sheets service = new Sheets.Builder(httpTransport, JSON_FACTORY, getCredentials(httpTransport))
                     .setApplicationName(APPLICATION_NAME)
                     .build();

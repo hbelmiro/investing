@@ -9,6 +9,7 @@
             <Class name="com.hbelmiro.investing.Operation$Builder"/>
             <Class name="com.hbelmiro.investing.dividend.Dividend"/>
             <Class name="com.hbelmiro.investing.irpf.CapitalGainsResult"/>
+            <Class name="com.hbelmiro.investing.irpf.DividendsResult"/>
             <Class name="com.hbelmiro.investing.irpf.IrpfAssetData"/>
             <Class name="com.hbelmiro.investing.ptax.BcbPtaxResponse"/>
         </Or>

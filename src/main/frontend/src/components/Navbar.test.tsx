@@ -12,4 +12,15 @@ describe('Navbar', () => {
     )
     expect(screen.getByText('Investing')).toBeInTheDocument()
   })
+
+  it('renders IRPF navigation link', () => {
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    )
+    const link = screen.getByRole('link', { name: /irpf/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', '/irpf')
+  })
 })
