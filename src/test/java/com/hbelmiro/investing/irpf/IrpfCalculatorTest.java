@@ -227,8 +227,10 @@ class IrpfCalculatorTest {
                 .amount(new BigDecimal("11"))
                 .build();
 
+        List<Operation> buys = List.of(BUY_JAN);
+        List<Operation> sells = List.of(sell);
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(List.of(BUY_JAN), List.of(sell), 2025, usConverter));
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
     }
 
     // | Date       | Op   | Qty | Price |
@@ -246,8 +248,10 @@ class IrpfCalculatorTest {
                 .amount(new BigDecimal("5"))
                 .build();
 
+        List<Operation> buys = List.of();
+        List<Operation> sells = List.of(sell);
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(List.of(), List.of(sell), 2025, usConverter));
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
     }
 
     // | Date       | Op   | Qty | Price |
@@ -257,9 +261,10 @@ class IrpfCalculatorTest {
     // → error: at sell date, 0 shares bought
     @Test
     void calculateCapitalGains_sellExceedsCumulativeBoughtAtThatDate() {
+        List<Operation> buys = List.of(BUY_MAR);
+        List<Operation> sells = List.of(SELL_FEB);
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(
-                        List.of(BUY_MAR), List.of(SELL_FEB), 2025, usConverter));
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
     }
 
     // | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
@@ -385,9 +390,10 @@ class IrpfCalculatorTest {
     // #3 | 2025: S only | Expected: error (no buys)
     @Test
     void multiYear_onlySell2025_nobuys() {
+        List<Operation> buys = List.of();
+        List<Operation> sells = List.of(SELL_2025);
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(
-                        List.of(), List.of(SELL_2025), 2025, usConverter));
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
     }
 
     // #4 | 2024: B | 2025: B | Expected: yearGains=0, totalGains=0, avgUsd=50.00

@@ -307,6 +307,7 @@ class IrpfResourceTest {
 
         List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
 
+        assertThat(result).isNotEmpty();
         assertThat(result).extracting(IrpfAssetData::symbol)
                 .doesNotContain("?");
     }

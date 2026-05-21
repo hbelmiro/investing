@@ -1,7 +1,7 @@
 import { IRPF_COLUMN_HEADERS, type IrpfAssetData, type IrpfResponse } from '../api/types'
 
 interface IrpfTableProps {
-  data: IrpfResponse
+  readonly data: IrpfResponse
 }
 
 const brlFormatter = new Intl.NumberFormat('pt-BR', {
@@ -42,7 +42,7 @@ export function IrpfTable({ data }: IrpfTableProps) {
   )
 }
 
-function IrpfRow({ row }: { row: IrpfAssetData }) {
+function IrpfRow({ row }: { readonly row: IrpfAssetData }) {
   if (row.error) {
     return (
       <tr className="irpf-error-row">
