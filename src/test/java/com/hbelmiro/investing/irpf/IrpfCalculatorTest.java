@@ -709,9 +709,10 @@ class IrpfCalculatorTest {
                 .tax(Money.of(BigDecimal.ZERO, MoneyUtil.BRL))
                 .amount(new BigDecimal("11")).build();
 
+        List<Operation> buys = List.of(BR_BUY_JAN);
+        List<Operation> sells = List.of(sell);
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(
-                        List.of(BR_BUY_JAN), List.of(sell), 2025, brConverter));
+                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, brConverter));
     }
 
     // | Date       | Op   | Qty | Price   |

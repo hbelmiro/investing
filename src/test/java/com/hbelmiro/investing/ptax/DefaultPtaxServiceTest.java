@@ -84,8 +84,9 @@ class DefaultPtaxServiceTest {
 
         var service = new DefaultPtaxService(stub);
 
+        LocalDate date = LocalDate.of(2025, 1, 15);
         assertThatExceptionOfType(PtaxRateNotFoundException.class)
-                .isThrownBy(() -> service.getCotacaoCompra(LocalDate.of(2025, 1, 15)))
+                .isThrownBy(() -> service.getCotacaoCompra(date))
                 .withMessageContaining("2025-01-15");
     }
 
@@ -151,8 +152,9 @@ class DefaultPtaxServiceTest {
 
         var service = new DefaultPtaxService(stub);
 
+        LocalDate date = LocalDate.of(2025, 1, 15);
         assertThatExceptionOfType(PtaxRateNotFoundException.class)
-                .isThrownBy(() -> service.getCotacaoCompra(LocalDate.of(2025, 1, 15)));
+                .isThrownBy(() -> service.getCotacaoCompra(date));
     }
 
     @Test
