@@ -66,7 +66,7 @@ public class FundamentusResource {
             Optional<Indicators> indicators;
             try {
                 indicators = Optional.of(fundamentusClient.read(ticker));
-            } catch (Exception e) {
+            } catch (Exception _) {
                 indicators = Optional.empty();
             }
             map.put(ticker, indicators);

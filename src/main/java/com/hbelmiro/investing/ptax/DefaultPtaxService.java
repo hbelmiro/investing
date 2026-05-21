@@ -39,6 +39,19 @@ public class DefaultPtaxService implements PtaxService {
         protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
             return size() > maxSize;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (!(obj instanceof BoundedLruMap<?, ?> that)) return false;
+            if (!super.equals(obj)) return false;
+            return maxSize == that.maxSize;
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode() * 31 + maxSize;
+        }
     }
 
     @Inject
