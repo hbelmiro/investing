@@ -50,7 +50,7 @@ abstract class OperationReader {
     public List<Operation> read() {
         try {
             return googleSheetsClient.read(page, RANGE).stream()
-                    .filter(row -> row.size() >= 4 && !row.get(0).toString().isEmpty())
+                    .filter(row -> row.size() >= 4 && !row.getFirst().toString().isEmpty())
                     .map(this::toOperation)
                     .toList();
         } catch (IOException | GeneralSecurityException e) {

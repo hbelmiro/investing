@@ -53,6 +53,11 @@ class IrpfResourceTest {
         csvGoogleSheetsClient.setCsv("Compras REITS", "/csv/IrpfResource/empty.csv");
         csvGoogleSheetsClient.setCsv("Vendas REITS", "/csv/IrpfResource/empty.csv");
         csvGoogleSheetsClient.setCsv("Proventos US", "/csv/IrpfResource/us_dividends.csv");
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Compras FIIs", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Vendas FIIs", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/empty.csv");
 
         fakePtaxService.setRate(LocalDate.of(2024, 6, 15), Money.of(new BigDecimal("5.4000"), MoneyUtil.BRL), Money.of(new BigDecimal("5.4100"), MoneyUtil.BRL));
         fakePtaxService.setRate(LocalDate.of(2025, 1, 15), Money.of(new BigDecimal("6.0370"), MoneyUtil.BRL), Money.of(new BigDecimal("6.0380"), MoneyUtil.BRL));
@@ -99,7 +104,7 @@ class IrpfResourceTest {
 
         assertThat(result).hasSize(2);
 
-        IrpfAssetData aapl = result.get(0);
+        IrpfAssetData aapl = result.getFirst();
         assertThat(aapl.symbol()).isEqualTo("AAPL");
         assertThat(aapl.quantity()).isEqualByComparingTo(new BigDecimal("12"));
         assertThat(aapl.avgCostBrl()).isEqualTo(brl("290.29"));
@@ -379,5 +384,241 @@ class IrpfResourceTest {
 
     private static Money usd(String value) {
         return Money.of(new BigDecimal(value), MoneyUtil.USD).with(Monetary.getDefaultRounding());
+    }
+
+    // --- BR stocks IRPF ---
+
+    // BR operations (from br_buys.csv + br_sells.csv + br_dividends.csv + fii_buys.csv):
+    //
+    // PETR4:
+    // | Date       | Op   | Qty | Price   | Tax    |
+    // |------------|------|-----|---------|--------|
+    // | 2024-06-15 | BUY  | 100 | R$30.00 | R$0.50 |
+    // | 2025-03-15 | BUY  | 50  | R$35.00 | R$0.30 |
+    // | 2025-06-15 | SELL | 30  | R$40.00 | R$0.00 |
+    // | 2025-06-15 | DIV  |     | R$1.50  | R$0.00 |
+    //
+    // | PETR4 Result        | Value   |
+    // |---------------------|---------|
+    // | quantity            | 120     |
+    // | avgCostBrl          | 31.67   |
+    // | totalCostBrl        | 3800.40 |
+    // | capitalGainsBrl     | 249.84  |
+    // | dividendsGrossBrl   | 1.50    |
+    // | dividendsTaxBrl     | 0       |
+    //
+    // ITUB3:
+    // | Date       | Op  | Qty | Price   | Tax    |
+    // |------------|-----|-----|---------|--------|
+    // | 2025-01-15 | BUY | 80  | R$25.00 | R$0.20 |
+    // | 2025-03-15 | DIV |     | R$2.00  | R$0.30 |
+    //
+    // | ITUB3 Result        | Value   |
+    // |---------------------|---------|
+    // | quantity            | 80      |
+    // | avgCostBrl          | 25.00   |
+    // | totalCostBrl        | 2000.00 |
+    // | capitalGainsBrl     | 0       |
+    // | dividendsGrossBrl   | 2.00    |
+    // | dividendsTaxBrl     | 0.30    |
+    //
+    // MXRF11 (FII):
+    // | Date       | Op  | Qty | Price   | Tax    |
+    // |------------|-----|-----|---------|--------|
+    // | 2025-02-15 | BUY | 200 | R$10.50 | R$0.10 |
+    //
+    // | MXRF11 Result       | Value   |
+    // |---------------------|---------|
+    // | quantity            | 200     |
+    // | avgCostBrl          | 10.50   |
+    // | totalCostBrl        | 2100.00 |
+    // | capitalGainsBrl     | 0       |
+    @Test
+    void getBrStocksIrpf() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells.csv");
+        csvGoogleSheetsClient.setCsv("Compras FIIs", "/csv/IrpfResource/fii_buys.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        assertThat(result).hasSize(3);
+
+        IrpfAssetData itub3 = result.getFirst();
+        assertThat(itub3.symbol()).isEqualTo("ITUB3");
+        assertThat(itub3.quantity()).isEqualByComparingTo(new BigDecimal("80"));
+        assertThat(itub3.avgCostBrl()).isEqualTo(brl("25.00"));
+        assertThat(itub3.totalCostBrl()).isEqualTo(brl("2000.00"));
+        assertThat(itub3.avgCostUsd()).isNull();
+        assertThat(itub3.totalCostUsd()).isNull();
+        assertThat(itub3.ptaxRate()).isNull();
+        assertThat(itub3.capitalGainsBrl()).isEqualTo(brl("0"));
+        assertThat(itub3.dividendsGrossBrl()).isEqualTo(brl("2.00"));
+        assertThat(itub3.dividendsTaxBrl()).isEqualTo(brl("0.30"));
+
+        IrpfAssetData mxrf11 = result.get(1);
+        assertThat(mxrf11.symbol()).isEqualTo("MXRF11");
+        assertThat(mxrf11.quantity()).isEqualByComparingTo(new BigDecimal("200"));
+        assertThat(mxrf11.avgCostBrl()).isEqualTo(brl("10.50"));
+        assertThat(mxrf11.totalCostBrl()).isEqualTo(brl("2100.00"));
+        assertThat(mxrf11.avgCostUsd()).isNull();
+
+        IrpfAssetData petr4 = result.get(2);
+        assertThat(petr4.symbol()).isEqualTo("PETR4");
+        assertThat(petr4.quantity()).isEqualByComparingTo(new BigDecimal("120"));
+        assertThat(petr4.avgCostBrl()).isEqualTo(brl("31.67"));
+        assertThat(petr4.totalCostBrl()).isEqualTo(brl("3800.40"));
+        assertThat(petr4.avgCostUsd()).isNull();
+        assertThat(petr4.totalCostUsd()).isNull();
+        assertThat(petr4.ptaxRate()).isNull();
+        assertThat(petr4.capitalGainsBrl()).isEqualTo(brl("249.84"));
+        assertThat(petr4.dividendsGrossBrl()).isEqualTo(brl("1.50"));
+        assertThat(petr4.dividendsTaxBrl()).isEqualTo(brl("0"));
+    }
+
+    @Test
+    void getBrStocksIrpf_dividendsFilteredByYear() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2024);
+
+        IrpfAssetData petr4 = result.stream().filter(d -> d.symbol().equals("PETR4")).findFirst().orElseThrow();
+        assertThat(petr4.dividendsGrossBrl()).isEqualTo(brl("0"));
+    }
+
+    // br_buys_with_future.csv adds VALE3 buy in 2026
+    // Expected: VALE3 excluded from 2025 results
+    @Test
+    void getBrStocksIrpf_excludesFutureBuys() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys_with_future.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .contains("PETR4", "ITUB3")
+                .doesNotContain("VALE3");
+    }
+
+    // br_sells_unknown_symbol.csv has VALE3 sell with no buy history
+    // Expected: IllegalStateException
+    @Test
+    void getBrStocksIrpf_throwsWhenSellSymbolHasNoBuys() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_unknown_symbol.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> irpfResource.getBrStocksIrpf(2025));
+    }
+
+    // br_sells_with_prior_year.csv: PETR4 sell 20 in 2024, sell 30 in 2025
+    //
+    // | Date       | Op   | Qty | Price   | Tax    |
+    // |------------|------|-----|---------|--------|
+    // | 2024-06-15 | BUY  | 100 | R$30.00 | R$0.50 |
+    // | 2024-09-15 | SELL | 20  | R$32.00 | R$0.00 |
+    // | 2025-03-15 | BUY  | 50  | R$35.00 | R$0.30 |
+    // | 2025-06-15 | SELL | 30  | R$40.00 | R$0.00 |
+    //
+    // | Result          | Value   |
+    // |-----------------|---------|
+    // | quantity        | 100     |
+    // | avgCostBrl      | 31.67   |
+    // | totalCostBrl    | 3167.00 |
+    // | capitalGainsBrl | 249.84  |
+    @Test
+    void getBrStocksIrpf_previousYearSellsReduceQuantity() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_with_prior_year.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        IrpfAssetData petr4 = result.stream().filter(d -> d.symbol().equals("PETR4")).findFirst().orElseThrow();
+        assertThat(petr4.quantity()).isEqualByComparingTo(new BigDecimal("100"));
+        assertThat(petr4.avgCostBrl()).isEqualTo(brl("31.67"));
+        assertThat(petr4.totalCostBrl()).isEqualTo(brl("3167.00"));
+        assertThat(petr4.capitalGainsBrl()).isEqualTo(brl("249.84"));
+    }
+
+    // VALE3: bought 50 in 2024, sold 50 in 2024, no 2025 activity
+    // Expected: excluded from results
+    @Test
+    void getBrStocksIrpf_excludesFullyLiquidatedAssetWithNoYearActivity() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys_with_liquidated.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_with_liquidation.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .contains("PETR4", "ITUB3")
+                .doesNotContain("VALE3");
+    }
+
+    // VALE3: bought 3.33333 + 6.66667 = ~10, sold 10 → quantity ≈ 0
+    // Expected: excluded (near-zero after rounding)
+    @Test
+    void getBrStocksIrpf_excludesNearZeroQuantityFromFractionalLiquidation() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys_fractional_liquidated.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_fractional_liquidation.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .contains("PETR4", "ITUB3")
+                .doesNotContain("VALE3");
+    }
+
+    // Sells CSV has symbol "-", dividends CSV has "?"
+    // Expected: all malformed symbols filtered out, PETR4 and ITUB3 present
+    @Test
+    void getBrStocksIrpf_filtersMalformedSymbolsFromSellsAndDividends() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_with_placeholder.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends_malformed_symbols.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        assertThat(result).extracting(IrpfAssetData::symbol)
+                .doesNotContain("-", "?")
+                .contains("PETR4", "ITUB3");
+    }
+
+    // | Symbol | Buys | Sells         | Expected          |
+    // |--------|------|---------------|-------------------|
+    // | PETR4  | 150  | 30 (valid)    | success, no error |
+    // | ITUB3  | 80   | 999 (oversell)| error field set   |
+    @Test
+    void getBrStocksIrpf_returnsErrorFieldForAssetWithCalculationFailure() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações BR", "/csv/IrpfResource/br_sells_oversell.csv");
+        csvGoogleSheetsClient.setCsv("Proventos BR", "/csv/IrpfResource/br_dividends.csv");
+
+        List<IrpfAssetData> result = irpfResource.getBrStocksIrpf(2025);
+
+        IrpfAssetData petr4 = result.stream().filter(d -> d.symbol().equals("PETR4")).findFirst().orElseThrow();
+        assertThat(petr4.error()).isNull();
+        assertThat(petr4.avgCostBrl()).isNotNull();
+
+        IrpfAssetData itub3 = result.stream().filter(d -> d.symbol().equals("ITUB3")).findFirst().orElseThrow();
+        assertThat(itub3.error()).isNotNull();
+        assertThat(itub3.error()).contains("exceeds position");
+    }
+
+    @Test
+    void getAvailableYears_includesBrBuyDates() {
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
+        csvGoogleSheetsClient.setCsv("Compras FIIs", "/csv/IrpfResource/fii_buys.csv");
+
+        List<Integer> years = irpfResource.getAvailableYears();
+
+        assertThat(years.getFirst()).isEqualTo(2024);
+        assertThat(years.getLast()).isEqualTo(LocalDate.now().getYear());
     }
 }

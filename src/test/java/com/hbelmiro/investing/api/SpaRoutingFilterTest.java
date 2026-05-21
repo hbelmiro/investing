@@ -35,6 +35,8 @@ class SpaRoutingFilterTest {
         csvGoogleSheetsClient.setCsv("Compras Ações US", "/csv/IrpfResource/us_buys.csv");
         csvGoogleSheetsClient.setCsv("Compras Renda Fixa US", "/csv/IrpfResource/empty.csv");
         csvGoogleSheetsClient.setCsv("Compras REITS", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/empty.csv");
+        csvGoogleSheetsClient.setCsv("Compras FIIs", "/csv/IrpfResource/empty.csv");
     }
 
     @ParameterizedTest

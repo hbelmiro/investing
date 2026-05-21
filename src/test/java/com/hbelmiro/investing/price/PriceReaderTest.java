@@ -9,7 +9,6 @@ import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.Test;
 
 import javax.money.Monetary;
-import java.security.GeneralSecurityException;
 
 import static com.hbelmiro.investing.currency.CurrencyCode.BRL;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +24,7 @@ class PriceReaderTest {
     CsvGoogleSheetsClient csvGoogleSheetsClient;
 
     @Test
-    void readPrice() throws GeneralSecurityException {
+    void readPrice() {
         csvGoogleSheetsClient.setCsv("/csv/PriceReader/readPrice.csv");
 
         Money price = priceReader.read(new Asset("ITUB3", Monetary.getCurrency(BRL)));

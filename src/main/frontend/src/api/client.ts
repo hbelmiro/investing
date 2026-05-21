@@ -30,3 +30,11 @@ export async function fetchIrpfData(year: number, signal?: AbortSignal): Promise
   }
   return response.json()
 }
+
+export async function fetchBrIrpfData(year: number, signal?: AbortSignal): Promise<IrpfResponse> {
+  const response = await fetch(`/api/irpf/br_stocks?year=${year}`, { signal })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch BR IRPF data: ${response.status} ${response.statusText}`)
+  }
+  return response.json()
+}

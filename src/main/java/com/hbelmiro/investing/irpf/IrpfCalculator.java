@@ -2,11 +2,11 @@ package com.hbelmiro.investing.irpf;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.dividend.Dividend;
-import com.hbelmiro.investing.ptax.PtaxService;
 import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
 
+import javax.money.CurrencyUnit;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -23,7 +23,7 @@ public final class IrpfCalculator {
     IrpfCalculator() {
     }
 
-    public CapitalGainsResult calculateCapitalGains(List<Operation> buys, List<Operation> sells, int year, PtaxService ptaxService) {
+    public CapitalGainsResult calculateCapitalGains(List<Operation> buys, List<Operation> sells, int year, CurrencyConverter converter) {
         LocalDate endOfYear = LocalDate.of(year, 12, 31);
 
         List<Operation> buysUpToYear = buys.stream()
@@ -50,8 +50,8 @@ public final class IrpfCalculator {
                         + " (sold: " + cumulativeSold + ", bought: " + cumulativeBought + ")");
             }
 
-            Money avgCostAtSellDate = avgCostBrlAtDate(buysUpToYear, sell.getDate(), ptaxService);
-            Money sellBrl = toSellBrl(sell, ptaxService);
+            Money avgCostAtSellDate = avgCostBrlAtDate(buysUpToYear, sell.getDate(), converter);
+            Money sellBrl = converter.toSellBrl(sell);
             Money costBrl = avgCostAtSellDate.multiply(sell.getAmount());
             Money gain = sellBrl.subtract(costBrl);
 
@@ -61,10 +61,10 @@ public final class IrpfCalculator {
             }
         }
 
-        Money avgCostBrl = avgCostBrlAtDate(buysUpToYear, endOfYear, ptaxService);
-        Money avgCostUsd = avgCostUsdAtDate(buysUpToYear, endOfYear);
+        Money avgCostBrl = avgCostBrlAtDate(buysUpToYear, endOfYear, converter);
+        Money avgCostOriginal = avgCostOriginalAtDate(buysUpToYear, endOfYear);
 
-        return new CapitalGainsResult(yearGains, totalGains, avgCostBrl, avgCostUsd);
+        return new CapitalGainsResult(yearGains, totalGains, avgCostBrl, avgCostOriginal);
     }
 
     private BigDecimal cumulativeBoughtAtDate(List<Operation> sortedBuys, LocalDate date) {
@@ -76,13 +76,13 @@ public final class IrpfCalculator {
         return total;
     }
 
-    private Money avgCostBrlAtDate(List<Operation> sortedBuys, LocalDate date, PtaxService ptaxService) {
+    private Money avgCostBrlAtDate(List<Operation> sortedBuys, LocalDate date, CurrencyConverter converter) {
         Money totalCost = Money.zero(MoneyUtil.BRL);
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (Operation buy : sortedBuys) {
             if (buy.getDate().isAfter(date)) break;
-            totalCost = totalCost.add(toCostBrl(buy, ptaxService));
+            totalCost = totalCost.add(converter.toCostBrl(buy));
             totalAmount = totalAmount.add(buy.getAmount());
         }
 
@@ -91,49 +91,39 @@ public final class IrpfCalculator {
                 : Money.zero(MoneyUtil.BRL);
     }
 
-    private Money avgCostUsdAtDate(List<Operation> sortedBuys, LocalDate date) {
-        Money totalCost = Money.zero(MoneyUtil.USD);
+    private Money avgCostOriginalAtDate(List<Operation> sortedBuys, LocalDate date) {
+        if (sortedBuys.isEmpty()) {
+            return Money.zero(MoneyUtil.BRL);
+        }
+
+        CurrencyUnit currency = sortedBuys.getFirst().getPrice().getCurrency();
+        Money totalCost = Money.zero(currency);
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (Operation buy : sortedBuys) {
             if (buy.getDate().isAfter(date)) break;
-            totalCost = totalCost.add(toCostUsd(buy));
+            totalCost = totalCost.add(rawCost(buy));
             totalAmount = totalAmount.add(buy.getAmount());
         }
 
         return totalAmount.compareTo(BigDecimal.ZERO) > 0
                 ? totalCost.divide(totalAmount)
-                : Money.zero(MoneyUtil.USD);
+                : Money.zero(currency);
     }
 
-    public DividendsResult calculateDividendsBrl(List<Dividend> dividends, PtaxService ptaxService) {
+    public DividendsResult calculateDividendsBrl(List<Dividend> dividends, CurrencyConverter converter) {
         Money grossBrl = Money.zero(MoneyUtil.BRL);
         Money taxBrl = Money.zero(MoneyUtil.BRL);
 
         for (Dividend d : dividends) {
-            Money ptaxVenda = ptaxService.getCotacaoVenda(d.date());
-            grossBrl = grossBrl.add(convertUsdToBrl(d.value(), ptaxVenda));
-            taxBrl = taxBrl.add(convertUsdToBrl(d.tax(), ptaxVenda));
+            grossBrl = grossBrl.add(converter.toDividendGrossBrl(d));
+            taxBrl = taxBrl.add(converter.toDividendTaxBrl(d));
         }
 
         return new DividendsResult(grossBrl, taxBrl);
     }
 
-    private Money toCostUsd(Operation buy) {
+    private Money rawCost(Operation buy) {
         return buy.getPrice().multiply(buy.getAmount()).add(buy.getTax());
-    }
-
-    private Money toCostBrl(Operation buy, PtaxService ptaxService) {
-        Money costUsd = toCostUsd(buy);
-        return convertUsdToBrl(costUsd, ptaxService.getCotacaoCompra(buy.getDate()));
-    }
-
-    private Money toSellBrl(Operation sell, PtaxService ptaxService) {
-        Money sellUsd = sell.getPrice().multiply(sell.getAmount());
-        return convertUsdToBrl(sellUsd, ptaxService.getCotacaoVenda(sell.getDate()));
-    }
-
-    private Money convertUsdToBrl(Money usdAmount, Money ptaxRate) {
-        return Money.of(usdAmount.multiply(ptaxRate.getNumber()).getNumber(), MoneyUtil.BRL);
     }
 }

@@ -41,3 +41,14 @@ export const IRPF_COLUMN_HEADERS = [
   'Dividendos Bruto (BRL)',
   'Imposto Dividendos (BRL)',
 ] as const
+
+export const BR_IRPF_COLUMN_HEADERS = [
+  'Ativo',
+  'Quantidade',
+  'Custo Médio (BRL)',
+  'Custo Total (BRL)',
+  'Ganho de Capital Ano (BRL)',
+  'Ganho de Capital Total (BRL)',
+  'Dividendos Bruto (BRL)',
+  'Imposto Dividendos (BRL)',
+] as const
