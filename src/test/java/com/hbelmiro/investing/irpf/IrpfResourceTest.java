@@ -309,6 +309,7 @@ class IrpfResourceTest {
 
         assertThat(result).isNotEmpty();
         assertThat(result).extracting(IrpfAssetData::symbol)
+                .isNotEmpty()
                 .doesNotContain("?");
     }
 

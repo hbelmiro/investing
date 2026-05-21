@@ -14,7 +14,7 @@ describe('fetchStocks', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const result = await fetchStocks('brazil')
     expect(result).toEqual(mockData)
@@ -28,7 +28,7 @@ describe('fetchStocks', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const result = await fetchStocks('us')
     expect(result).toEqual(mockData)
@@ -40,7 +40,7 @@ describe('fetchStocks', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-    } as Response)
+    })
 
     await expect(fetchStocks('brazil')).rejects.toThrow()
   })
@@ -59,7 +59,7 @@ describe('fetchIrpfData', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const result = await fetchIrpfData(2025)
     expect(result).toEqual(mockData)
@@ -70,7 +70,7 @@ describe('fetchIrpfData', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const controller = new AbortController()
     await fetchIrpfData(2025, controller.signal)
@@ -82,7 +82,7 @@ describe('fetchIrpfData', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-    } as Response)
+    })
 
     await expect(fetchIrpfData(2025)).rejects.toThrow('Failed to fetch IRPF data: 500 Internal Server Error')
   })
@@ -101,7 +101,7 @@ describe('fetchBrIrpfData', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const result = await fetchBrIrpfData(2025)
     expect(result).toEqual(mockData)
@@ -112,7 +112,7 @@ describe('fetchBrIrpfData', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockData),
-    } as Response)
+    })
 
     const controller = new AbortController()
     await fetchBrIrpfData(2025, controller.signal)
@@ -124,7 +124,7 @@ describe('fetchBrIrpfData', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-    } as Response)
+    })
 
     await expect(fetchBrIrpfData(2025)).rejects.toThrow('Failed to fetch BR IRPF data: 500 Internal Server Error')
   })
@@ -140,7 +140,7 @@ describe('fetchIrpfYears', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockYears),
-    } as Response)
+    })
 
     const result = await fetchIrpfYears()
     expect(result).toEqual(mockYears)
@@ -152,7 +152,7 @@ describe('fetchIrpfYears', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-    } as Response)
+    })
 
     await expect(fetchIrpfYears()).rejects.toThrow('Failed to fetch IRPF years: 500 Internal Server Error')
   })

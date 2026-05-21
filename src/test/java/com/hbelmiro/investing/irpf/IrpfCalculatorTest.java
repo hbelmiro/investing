@@ -229,8 +229,11 @@ class IrpfCalculatorTest {
 
         List<Operation> buys = List.of(BUY_JAN);
         List<Operation> sells = List.of(sell);
+        var calculator = irpfCalculator;
+        var converter = usConverter;
+        var year = 2025;
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
+                .isThrownBy(() -> calculator.calculateCapitalGains(buys, sells, year, converter));
     }
 
     // | Date       | Op   | Qty | Price |
@@ -250,8 +253,11 @@ class IrpfCalculatorTest {
 
         List<Operation> buys = List.of();
         List<Operation> sells = List.of(sell);
+        var calculator = irpfCalculator;
+        var converter = usConverter;
+        var year = 2025;
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
+                .isThrownBy(() -> calculator.calculateCapitalGains(buys, sells, year, converter));
     }
 
     // | Date       | Op   | Qty | Price |
@@ -263,8 +269,11 @@ class IrpfCalculatorTest {
     void calculateCapitalGains_sellExceedsCumulativeBoughtAtThatDate() {
         List<Operation> buys = List.of(BUY_MAR);
         List<Operation> sells = List.of(SELL_FEB);
+        var calculator = irpfCalculator;
+        var converter = usConverter;
+        var year = 2025;
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
+                .isThrownBy(() -> calculator.calculateCapitalGains(buys, sells, year, converter));
     }
 
     // | Date       | Op   | Qty | Price | PTAX Compra | PTAX Venda |
@@ -392,8 +401,11 @@ class IrpfCalculatorTest {
     void multiYear_onlySell2025_nobuys() {
         List<Operation> buys = List.of();
         List<Operation> sells = List.of(SELL_2025);
+        var calculator = irpfCalculator;
+        var converter = usConverter;
+        var year = 2025;
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, usConverter));
+                .isThrownBy(() -> calculator.calculateCapitalGains(buys, sells, year, converter));
     }
 
     // #4 | 2024: B | 2025: B | Expected: yearGains=0, totalGains=0, avgUsd=50.00
@@ -711,8 +723,10 @@ class IrpfCalculatorTest {
 
         List<Operation> buys = List.of(BR_BUY_JAN);
         List<Operation> sells = List.of(sell);
+        var calculator = irpfCalculator;
+        var year = 2025;
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> irpfCalculator.calculateCapitalGains(buys, sells, 2025, brConverter));
+                .isThrownBy(() -> calculator.calculateCapitalGains(buys, sells, year, brConverter));
     }
 
     // | Date       | Op   | Qty | Price   |
