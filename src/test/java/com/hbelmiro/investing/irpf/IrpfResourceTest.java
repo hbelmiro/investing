@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import javax.money.Monetary;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -323,7 +324,7 @@ class IrpfResourceTest {
         List<Integer> years = irpfResource.getAvailableYears();
 
         assertThat(years.getFirst()).isEqualTo(2024);
-        assertThat(years.getLast()).isEqualTo(LocalDate.now().getYear());
+        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear());
         assertThat(years).isSorted();
         for (int i = 1; i < years.size(); i++) {
             assertThat(years.get(i)).isEqualTo(years.get(i - 1) + 1);
@@ -455,8 +456,10 @@ class IrpfResourceTest {
         assertThat(itub3.totalCostUsd()).isNull();
         assertThat(itub3.ptaxRate()).isNull();
         assertThat(itub3.capitalGainsBrl()).isEqualTo(brl("0"));
-        assertThat(itub3.dividendsGrossBrl()).isEqualTo(brl("2.00"));
-        assertThat(itub3.dividendsTaxBrl()).isEqualTo(brl("0.30"));
+        assertThat(itub3.dividendsGrossBrl()).isEqualTo(brl("0"));
+        assertThat(itub3.dividendsTaxBrl()).isEqualTo(brl("0"));
+        assertThat(itub3.jcpGrossBrl()).isEqualTo(brl("2.00"));
+        assertThat(itub3.jcpTaxBrl()).isEqualTo(brl("0.30"));
 
         IrpfAssetData mxrf11 = result.get(1);
         assertThat(mxrf11.symbol()).isEqualTo("MXRF11");
@@ -476,6 +479,8 @@ class IrpfResourceTest {
         assertThat(petr4.capitalGainsBrl()).isEqualTo(brl("249.84"));
         assertThat(petr4.dividendsGrossBrl()).isEqualTo(brl("1.50"));
         assertThat(petr4.dividendsTaxBrl()).isEqualTo(brl("0"));
+        assertThat(petr4.jcpGrossBrl()).isEqualTo(brl("0"));
+        assertThat(petr4.jcpTaxBrl()).isEqualTo(brl("0"));
     }
 
     @Test
@@ -621,6 +626,6 @@ class IrpfResourceTest {
         List<Integer> years = irpfResource.getAvailableYears();
 
         assertThat(years.getFirst()).isEqualTo(2024);
-        assertThat(years.getLast()).isEqualTo(LocalDate.now().getYear());
+        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear());
     }
 }

@@ -23,6 +23,10 @@ export interface IrpfAssetData {
   totalCapitalGainsBrl?: number
   dividendsGrossBrl?: number
   dividendsTaxBrl?: number
+  jcpGrossBrl?: number
+  jcpTaxBrl?: number
+  unknownGrossBrl?: number
+  unknownTaxBrl?: number
   error?: string
 }
 
@@ -51,4 +55,6 @@ export const BR_IRPF_COLUMN_HEADERS = [
   'Ganho de Capital Total (BRL)',
   'Dividendos Bruto (BRL)',
   'Imposto Dividendos (BRL)',
+  'JCP (BRL)',
+  'Proventos Desconhecidos (BRL)',
 ] as const

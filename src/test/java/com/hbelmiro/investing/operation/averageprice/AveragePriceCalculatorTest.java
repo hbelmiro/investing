@@ -12,6 +12,7 @@ import javax.money.CurrencyUnit;
 import javax.money.Monetary;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import static com.hbelmiro.investing.operation.averageprice.AveragePriceCalculator.DIFFERENT_PRICE_CURRENCY_ERROR_MSG;
@@ -156,7 +157,7 @@ class AveragePriceCalculatorTest {
     @Test
     void operationsForNonDistinctStocksShouldThrowException() {
         Operation op1 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
@@ -165,7 +166,7 @@ class AveragePriceCalculatorTest {
                 .build();
 
         Operation op2 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("BBBB", DOLLARS))
                 .price(Money.of(12, DOLLARS))
@@ -183,7 +184,7 @@ class AveragePriceCalculatorTest {
     @Test
     void operationsForNonDistinctCurrencyPriceShouldThrowException() {
         Operation op1 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
@@ -192,7 +193,7 @@ class AveragePriceCalculatorTest {
                 .build();
 
         Operation op2 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, REAIS))
@@ -210,7 +211,7 @@ class AveragePriceCalculatorTest {
     @Test
     void operationsForNonDistinctCurrencyTaxShouldThrowException() {
         Operation op1 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
@@ -219,7 +220,7 @@ class AveragePriceCalculatorTest {
                 .build();
 
         Operation op2 = Operation.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneId.systemDefault()))
                 .type(OperationType.BUY)
                 .asset(new Asset("AAAA", DOLLARS))
                 .price(Money.of(12, DOLLARS))
