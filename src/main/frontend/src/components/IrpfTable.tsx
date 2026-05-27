@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { IRPF_COLUMN_HEADERS, type IrpfAssetData, type IrpfResponse } from '../api/types'
 import { brlFormatter, quantityFormatter } from '../formatters'
 
@@ -16,6 +17,8 @@ const ptaxFormatter = new Intl.NumberFormat('pt-BR', {
 })
 
 export function IrpfTable({ data }: IrpfTableProps) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+
   if (data.length === 0) {
     return <p>Nenhum dado encontrado.</p>
   }
@@ -31,17 +34,28 @@ export function IrpfTable({ data }: IrpfTableProps) {
       </thead>
       <tbody>
         {data.map((row) => (
-          <IrpfRow key={row.symbol} row={row} />
+          <IrpfRow
+            key={row.symbol}
+            row={row}
+            selected={selectedKey === row.symbol}
+            onSelect={() => setSelectedKey(selectedKey === row.symbol ? null : row.symbol)}
+          />
         ))}
       </tbody>
     </table>
   )
 }
 
-function IrpfRow({ row }: { readonly row: IrpfAssetData }) {
+interface IrpfRowProps {
+  readonly row: IrpfAssetData
+  readonly selected: boolean
+  readonly onSelect: () => void
+}
+
+function IrpfRow({ row, selected, onSelect }: IrpfRowProps) {
   if (row.error) {
     return (
-      <tr className="irpf-error-row">
+      <tr className={`irpf-error-row${selected ? ' selected' : ''}`} onClick={onSelect}>
         <td>{row.symbol}</td>
         <td colSpan={10}>
           <details className="irpf-error-details">
@@ -54,7 +68,7 @@ function IrpfRow({ row }: { readonly row: IrpfAssetData }) {
   }
 
   return (
-    <tr>
+    <tr className={selected ? 'selected' : undefined} onClick={onSelect}>
       <td>{row.symbol}</td>
       <td>{quantityFormatter.format(row.quantity!)}</td>
       <td>{usdFormatter.format(row.avgCostUsd!)}</td>

@@ -119,6 +119,10 @@ tr:hover td {
   background: #fafafa;
 }
 
+tr.selected td {
+  background: #e8f0fe;
+}
+
 .irpf-controls {
   margin-bottom: 1rem;
   display: flex;
