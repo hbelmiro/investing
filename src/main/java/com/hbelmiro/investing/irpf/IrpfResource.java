@@ -195,7 +195,6 @@ public class IrpfResource {
                         .map(Operation::getAmount)
                         .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal quantity = totalBought.subtract(totalSold)
-                        .setScale(5, java.math.RoundingMode.HALF_UP)
                         .stripTrailingZeros();
 
                 Money capitalGainsBrl = gainsResult.capitalGainsBrl().with(rounding);
