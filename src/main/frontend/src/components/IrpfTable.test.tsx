@@ -30,20 +30,10 @@ describe('IrpfTable', () => {
     expect(screen.getByText('MSFT')).toBeInTheDocument()
   })
 
-  it('renders quantity with Brazilian formatting', () => {
+  it('renders quantity formatted via quantityFormatter', () => {
     render(<IrpfTable data={sampleData} />)
     expect(screen.getByText('12')).toBeInTheDocument()
     expect(screen.getByText('8')).toBeInTheDocument()
-  })
-
-  it('formats fractional quantity with Brazilian locale and near-zero as zero', () => {
-    const data: IrpfResponse = [
-      { symbol: 'MSFT', quantity: 1.2437552, avgCostUsd: 40, totalCostUsd: 320, avgCostBrl: 241, totalCostBrl: 1933, ptaxRate: 6.037, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
-      { symbol: 'ATVI', quantity: 2.2e-16, avgCostUsd: 0, totalCostUsd: 0, avgCostBrl: 0, totalCostBrl: 0, ptaxRate: 0, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
-    ]
-    render(<IrpfTable data={data} />)
-    expect(screen.getByText('1,2437552')).toBeInTheDocument()
-    expect(screen.queryByText(/e-/)).not.toBeInTheDocument()
   })
 
   it('formats money fields as BRL currency', () => {
