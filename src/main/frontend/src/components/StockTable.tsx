@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { COLUMN_HEADERS, type StocksResponse } from '../api/types'
 
 interface StockTableProps {
@@ -5,6 +6,8 @@ interface StockTableProps {
 }
 
 export function StockTable({ data }: StockTableProps) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+
   if (data.length === 0) {
     return <p>Nenhum ativo encontrado.</p>
   }
@@ -20,7 +23,11 @@ export function StockTable({ data }: StockTableProps) {
       </thead>
       <tbody>
         {data.map((row) => (
-          <tr key={row[0]}>
+          <tr
+            key={row[0]}
+            className={selectedKey === row[0] ? 'selected' : undefined}
+            onClick={() => setSelectedKey(selectedKey === row[0] ? null : row[0])}
+          >
             {row.map((cell, i) => (
               <td key={`${row[0]}-${i}`}>{cell}</td>
             ))}
