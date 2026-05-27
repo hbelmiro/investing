@@ -1,17 +1,9 @@
 import { BR_IRPF_COLUMN_HEADERS, type IrpfAssetData, type IrpfResponse } from '../api/types'
+import { brlFormatter, quantityFormatter } from '../formatters'
 
 interface BrIrpfTableProps {
   data: IrpfResponse
 }
-
-const brlFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
-
-const quantityFormatter = new Intl.NumberFormat('pt-BR', {
-  maximumFractionDigits: 10,
-})
 
 export function BrIrpfTable({ data }: BrIrpfTableProps) {
   if (data.length === 0) {
