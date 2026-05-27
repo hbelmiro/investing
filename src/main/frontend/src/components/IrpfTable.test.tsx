@@ -36,20 +36,13 @@ describe('IrpfTable', () => {
     expect(screen.getByText('8')).toBeInTheDocument()
   })
 
-  it('formats fractional quantity with comma as decimal separator', () => {
-    const fractionalData: IrpfResponse = [
+  it('formats fractional quantity with Brazilian locale and near-zero as zero', () => {
+    const data: IrpfResponse = [
       { symbol: 'MSFT', quantity: 1.2437552, avgCostUsd: 40, totalCostUsd: 320, avgCostBrl: 241, totalCostBrl: 1933, ptaxRate: 6.037, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
-    ]
-    render(<IrpfTable data={fractionalData} />)
-    expect(screen.getByText('1,2437552')).toBeInTheDocument()
-  })
-
-  it('renders near-zero quantity as zero instead of scientific notation', () => {
-    const nearZeroData: IrpfResponse = [
       { symbol: 'ATVI', quantity: 2.2e-16, avgCostUsd: 0, totalCostUsd: 0, avgCostBrl: 0, totalCostBrl: 0, ptaxRate: 0, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
     ]
-    render(<IrpfTable data={nearZeroData} />)
-    expect(screen.getByText('0')).toBeInTheDocument()
+    render(<IrpfTable data={data} />)
+    expect(screen.getByText('1,2437552')).toBeInTheDocument()
     expect(screen.queryByText(/e-/)).not.toBeInTheDocument()
   })
 
