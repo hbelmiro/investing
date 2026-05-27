@@ -19,10 +19,14 @@ public record IrpfAssetData(
         @JsonSerialize(using = MoneySerializer.class) Money totalCapitalGainsBrl,
         @JsonSerialize(using = MoneySerializer.class) Money dividendsGrossBrl,
         @JsonSerialize(using = MoneySerializer.class) Money dividendsTaxBrl,
+        @JsonSerialize(using = MoneySerializer.class) Money jcpGrossBrl,
+        @JsonSerialize(using = MoneySerializer.class) Money jcpTaxBrl,
+        @JsonSerialize(using = MoneySerializer.class) Money unknownGrossBrl,
+        @JsonSerialize(using = MoneySerializer.class) Money unknownTaxBrl,
         String error
 ) {
 
     public static IrpfAssetData error(String symbol, String error) {
-        return new IrpfAssetData(symbol, null, null, null, null, null, null, null, null, null, null, error);
+        return new IrpfAssetData(symbol, null, null, null, null, null, null, null, null, null, null, null, null, null, null, error);
     }
 }

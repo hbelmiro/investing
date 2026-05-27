@@ -2,6 +2,7 @@ package com.hbelmiro.investing.irpf;
 
 import com.hbelmiro.investing.Operation;
 import com.hbelmiro.investing.dividend.Dividend;
+import com.hbelmiro.investing.dividend.DividendType;
 import com.hbelmiro.investing.utils.MoneyUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.javamoney.moneta.Money;
@@ -112,15 +113,32 @@ public final class IrpfCalculator {
     }
 
     public DividendsResult calculateDividendsBrl(List<Dividend> dividends, CurrencyConverter converter) {
-        Money grossBrl = Money.zero(MoneyUtil.BRL);
-        Money taxBrl = Money.zero(MoneyUtil.BRL);
+        Money dividendGrossBrl = Money.zero(MoneyUtil.BRL);
+        Money dividendTaxBrl = Money.zero(MoneyUtil.BRL);
+        Money jcpGrossBrl = Money.zero(MoneyUtil.BRL);
+        Money jcpTaxBrl = Money.zero(MoneyUtil.BRL);
+        Money unknownGrossBrl = Money.zero(MoneyUtil.BRL);
+        Money unknownTaxBrl = Money.zero(MoneyUtil.BRL);
 
         for (Dividend d : dividends) {
-            grossBrl = grossBrl.add(converter.toDividendGrossBrl(d));
-            taxBrl = taxBrl.add(converter.toDividendTaxBrl(d));
+            switch (d.type()) {
+                case DIVIDEND -> {
+                    dividendGrossBrl = dividendGrossBrl.add(converter.toDividendGrossBrl(d));
+                    dividendTaxBrl = dividendTaxBrl.add(converter.toDividendTaxBrl(d));
+                }
+                case INTEREST_ON_EQUITY -> {
+                    jcpGrossBrl = jcpGrossBrl.add(converter.toDividendGrossBrl(d));
+                    jcpTaxBrl = jcpTaxBrl.add(converter.toDividendTaxBrl(d));
+                }
+                default -> {
+                    unknownGrossBrl = unknownGrossBrl.add(converter.toDividendGrossBrl(d));
+                    unknownTaxBrl = unknownTaxBrl.add(converter.toDividendTaxBrl(d));
+                }
+            }
         }
 
-        return new DividendsResult(grossBrl, taxBrl);
+        return new DividendsResult(dividendGrossBrl, dividendTaxBrl, jcpGrossBrl, jcpTaxBrl,
+                unknownGrossBrl, unknownTaxBrl);
     }
 
     private Money rawCost(Operation buy) {

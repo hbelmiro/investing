@@ -566,10 +566,10 @@ class IrpfCalculatorTest {
     // | 2025-01-15 | $0.75 | $0.05| 6.0380     | 4.53     | 0.30   |
     // | 2025-06-15 | $1.20 | $0   | 5.7100     | 6.85     | 0      |
     //
-    // | Result   | Value |
-    // |----------|-------|
-    // | grossBrl | 11.38 |
-    // | taxBrl   | 0.30  |
+    // | Result           | Value |
+    // |------------------|-------|
+    // | dividendGrossBrl | 11.38 |
+    // | dividendTaxBrl   | 0.30  |
     static Stream<Arguments> dividendsArgs() {
         return Stream.of(
                 Arguments.of(Named.of("chronological order", List.of(DIV_JAN, DIV_JUN))),
@@ -582,9 +582,9 @@ class IrpfCalculatorTest {
     void calculateDividendsBrl_twoDividends(List<Dividend> dividends) {
         DividendsResult result = irpfCalculator.calculateDividendsBrl(dividends, usConverter);
 
-        assertThat(result.grossBrl().with(Monetary.getDefaultRounding()))
+        assertThat(result.dividendGrossBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("11.38"), MoneyUtil.BRL));
-        assertThat(result.taxBrl().with(Monetary.getDefaultRounding()))
+        assertThat(result.dividendTaxBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("0.30"), MoneyUtil.BRL));
     }
 
@@ -592,8 +592,8 @@ class IrpfCalculatorTest {
     void calculateDividendsBrl_emptyList() {
         DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(), usConverter);
 
-        assertThat(result.grossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
-        assertThat(result.taxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.dividendGrossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.dividendTaxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
     }
 
     // --- BR capital gains (BrCurrencyConverter, no PTAX) ---
@@ -772,15 +772,17 @@ class IrpfCalculatorTest {
 
     // --- BR dividends (BrCurrencyConverter, no PTAX) ---
 
-    // | Date       | Gross  | Tax   |
-    // |------------|--------|-------|
-    // | 2025-01-15 | R$2.50 | R$0.30|
-    // | 2025-06-15 | R$3.00 | R$0   |
+    // | Date       | Type     | Gross  | Tax   |
+    // |------------|----------|--------|-------|
+    // | 2025-01-15 | DIVIDEND | R$2.50 | R$0.30|
+    // | 2025-06-15 | DIVIDEND | R$3.00 | R$0   |
     //
-    // | Result   | Value |
-    // |----------|-------|
-    // | grossBrl | 5.50  |
-    // | taxBrl   | 0.30  |
+    // | Result           | Value |
+    // |------------------|-------|
+    // | dividendGrossBrl | 5.50  |
+    // | dividendTaxBrl   | 0.30  |
+    // | jcpGrossBrl      | 0     |
+    // | jcpTaxBrl        | 0     |
     @Test
     void calculateBrDividends_twoDividends() {
         Dividend div1 = new Dividend(LocalDate.of(2025, 1, 15), DividendType.DIVIDEND,
@@ -792,17 +794,78 @@ class IrpfCalculatorTest {
 
         DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(div1, div2), brConverter);
 
-        assertThat(result.grossBrl().with(Monetary.getDefaultRounding()))
+        assertThat(result.dividendGrossBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("5.50"), MoneyUtil.BRL));
-        assertThat(result.taxBrl().with(Monetary.getDefaultRounding()))
+        assertThat(result.dividendTaxBrl().with(Monetary.getDefaultRounding()))
                 .isEqualTo(Money.of(new BigDecimal("0.30"), MoneyUtil.BRL));
+        assertThat(result.jcpGrossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.jcpTaxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+    }
+
+    // | Date       | Type              | Gross  | Tax   |
+    // |------------|-------------------|--------|-------|
+    // | 2025-01-15 | DIVIDEND          | R$2.50 | R$0.00|
+    // | 2025-03-15 | INTEREST_ON_EQUITY| R$4.00 | R$0.60|
+    // | 2025-06-15 | DIVIDEND          | R$3.00 | R$0.00|
+    // | 2025-06-15 | INTEREST_ON_EQUITY| R$1.50 | R$0.23|
+    //
+    // | Result           | Value |
+    // |------------------|-------|
+    // | dividendGrossBrl | 5.50  |
+    // | dividendTaxBrl   | 0     |
+    // | jcpGrossBrl      | 5.50  |
+    // | jcpTaxBrl        | 0.83  |
+    @Test
+    void calculateBrDividends_mixedDividendsAndJcp() {
+        Dividend div1 = new Dividend(LocalDate.of(2025, 1, 15), DividendType.DIVIDEND,
+                Money.of(new BigDecimal("2.50"), MoneyUtil.BRL),
+                Money.of(BigDecimal.ZERO, MoneyUtil.BRL), PETR4);
+        Dividend jcp1 = new Dividend(LocalDate.of(2025, 3, 15), DividendType.INTEREST_ON_EQUITY,
+                Money.of(new BigDecimal("4.00"), MoneyUtil.BRL),
+                Money.of(new BigDecimal("0.60"), MoneyUtil.BRL), PETR4);
+        Dividend div2 = new Dividend(LocalDate.of(2025, 6, 15), DividendType.DIVIDEND,
+                Money.of(new BigDecimal("3.00"), MoneyUtil.BRL),
+                Money.of(BigDecimal.ZERO, MoneyUtil.BRL), PETR4);
+        Dividend jcp2 = new Dividend(LocalDate.of(2025, 6, 15), DividendType.INTEREST_ON_EQUITY,
+                Money.of(new BigDecimal("1.50"), MoneyUtil.BRL),
+                Money.of(new BigDecimal("0.23"), MoneyUtil.BRL), PETR4);
+
+        DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(div1, jcp1, div2, jcp2), brConverter);
+
+        assertThat(result.dividendGrossBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("5.50"), MoneyUtil.BRL));
+        assertThat(result.dividendTaxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.jcpGrossBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("5.50"), MoneyUtil.BRL));
+        assertThat(result.jcpTaxBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("0.83"), MoneyUtil.BRL));
+    }
+
+    @Test
+    void calculateBrDividends_fractionsGroupedAsUnknown() {
+        Dividend div = new Dividend(LocalDate.of(2025, 1, 15), DividendType.DIVIDEND,
+                Money.of(new BigDecimal("2.00"), MoneyUtil.BRL),
+                Money.of(BigDecimal.ZERO, MoneyUtil.BRL), PETR4);
+        Dividend frac = new Dividend(LocalDate.of(2025, 3, 15), DividendType.FRACTIONS,
+                Money.of(new BigDecimal("0.50"), MoneyUtil.BRL),
+                Money.of(BigDecimal.ZERO, MoneyUtil.BRL), PETR4);
+
+        DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(div, frac), brConverter);
+
+        assertThat(result.dividendGrossBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("2.00"), MoneyUtil.BRL));
+        assertThat(result.jcpGrossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.unknownGrossBrl().with(Monetary.getDefaultRounding()))
+                .isEqualTo(Money.of(new BigDecimal("0.50"), MoneyUtil.BRL));
     }
 
     @Test
     void calculateBrDividends_emptyList() {
         DividendsResult result = irpfCalculator.calculateDividendsBrl(List.of(), brConverter);
 
-        assertThat(result.grossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
-        assertThat(result.taxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.dividendGrossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.dividendTaxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.jcpGrossBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
+        assertThat(result.jcpTaxBrl()).isEqualTo(Money.zero(MoneyUtil.BRL));
     }
 }

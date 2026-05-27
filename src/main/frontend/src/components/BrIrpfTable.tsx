@@ -37,7 +37,7 @@ function BrIrpfRow({ row }: { row: IrpfAssetData }) {
     return (
       <tr className="irpf-error-row">
         <td>{row.symbol}</td>
-        <td colSpan={7}>
+        <td colSpan={9}>
           <details className="irpf-error-details">
             <summary>Erro</summary>
             <p>{row.error}</p>
@@ -57,6 +57,8 @@ function BrIrpfRow({ row }: { row: IrpfAssetData }) {
       <td>{brlFormatter.format(row.totalCapitalGainsBrl!)}</td>
       <td>{brlFormatter.format(row.dividendsGrossBrl!)}</td>
       <td>{brlFormatter.format(row.dividendsTaxBrl!)}</td>
+      <td>{brlFormatter.format(row.jcpGrossBrl!)}</td>
+      <td>{brlFormatter.format(row.unknownGrossBrl!)}</td>
     </tr>
   )
 }

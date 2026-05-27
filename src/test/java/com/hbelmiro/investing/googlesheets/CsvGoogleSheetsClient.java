@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ public class CsvGoogleSheetsClient implements GoogleSheetsClient {
     private List<List<Object>> readCsv(String csvPath) {
         try (InputStream inputStream = getClass().getResourceAsStream(csvPath)) {
             if (inputStream != null) {
-                return Arrays.stream(new String(inputStream.readAllBytes()).split(System.lineSeparator()))
+                return Arrays.stream(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).split(System.lineSeparator()))
                         .filter(line -> !line.isEmpty())
                         .map(row -> {
                             String[] splitValues = row.split(";");
