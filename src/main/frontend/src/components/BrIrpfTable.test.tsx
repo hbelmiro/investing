@@ -34,10 +34,27 @@ describe('BrIrpfTable', () => {
     expect(screen.getByText('MXRF11')).toBeInTheDocument()
   })
 
-  it('renders quantity as plain number', () => {
+  it('renders quantity with Brazilian formatting', () => {
     render(<BrIrpfTable data={sampleData} />)
     expect(screen.getByText('120')).toBeInTheDocument()
     expect(screen.getByText('200')).toBeInTheDocument()
+  })
+
+  it('formats fractional quantity with comma as decimal separator', () => {
+    const fractionalData: IrpfResponse = [
+      { symbol: 'PETR4', quantity: 1.2437552, avgCostBrl: 31.67, totalCostBrl: 3800.40, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
+    ]
+    render(<BrIrpfTable data={fractionalData} />)
+    expect(screen.getByText('1,2437552')).toBeInTheDocument()
+  })
+
+  it('renders near-zero quantity as zero instead of scientific notation', () => {
+    const nearZeroData: IrpfResponse = [
+      { symbol: 'VALE3', quantity: 2.2e-16, avgCostBrl: 0, totalCostBrl: 0, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
+    ]
+    render(<BrIrpfTable data={nearZeroData} />)
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.queryByText(/e-/)).not.toBeInTheDocument()
   })
 
   it('formats money fields as BRL currency', () => {

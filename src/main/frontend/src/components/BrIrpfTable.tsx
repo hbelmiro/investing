@@ -9,6 +9,10 @@ const brlFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 })
 
+const quantityFormatter = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 10,
+})
+
 export function BrIrpfTable({ data }: BrIrpfTableProps) {
   if (data.length === 0) {
     return <p>Nenhum dado encontrado.</p>
@@ -50,7 +54,7 @@ function BrIrpfRow({ row }: { row: IrpfAssetData }) {
   return (
     <tr>
       <td>{row.symbol}</td>
-      <td>{row.quantity}</td>
+      <td>{quantityFormatter.format(row.quantity!)}</td>
       <td>{brlFormatter.format(row.avgCostBrl!)}</td>
       <td>{brlFormatter.format(row.totalCostBrl!)}</td>
       <td>{brlFormatter.format(row.capitalGainsBrl!)}</td>

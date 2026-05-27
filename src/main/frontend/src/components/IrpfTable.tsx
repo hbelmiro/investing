@@ -14,6 +14,10 @@ const usdFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'USD',
 })
 
+const quantityFormatter = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 10,
+})
+
 const ptaxFormatter = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 4,
   maximumFractionDigits: 4,
@@ -60,7 +64,7 @@ function IrpfRow({ row }: { readonly row: IrpfAssetData }) {
   return (
     <tr>
       <td>{row.symbol}</td>
-      <td>{row.quantity}</td>
+      <td>{quantityFormatter.format(row.quantity!)}</td>
       <td>{usdFormatter.format(row.avgCostUsd!)}</td>
       <td>{usdFormatter.format(row.totalCostUsd!)}</td>
       <td>{brlFormatter.format(row.avgCostBrl!)}</td>
