@@ -1,13 +1,9 @@
 import { IRPF_COLUMN_HEADERS, type IrpfAssetData, type IrpfResponse } from '../api/types'
+import { brlFormatter, quantityFormatter } from '../formatters'
 
 interface IrpfTableProps {
   readonly data: IrpfResponse
 }
-
-const brlFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
 
 const usdFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -60,7 +56,7 @@ function IrpfRow({ row }: { readonly row: IrpfAssetData }) {
   return (
     <tr>
       <td>{row.symbol}</td>
-      <td>{row.quantity}</td>
+      <td>{quantityFormatter.format(row.quantity!)}</td>
       <td>{usdFormatter.format(row.avgCostUsd!)}</td>
       <td>{usdFormatter.format(row.totalCostUsd!)}</td>
       <td>{brlFormatter.format(row.avgCostBrl!)}</td>

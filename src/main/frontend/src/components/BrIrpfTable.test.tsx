@@ -34,7 +34,7 @@ describe('BrIrpfTable', () => {
     expect(screen.getByText('MXRF11')).toBeInTheDocument()
   })
 
-  it('renders quantity as plain number', () => {
+  it('renders quantity formatted via quantityFormatter', () => {
     render(<BrIrpfTable data={sampleData} />)
     expect(screen.getByText('120')).toBeInTheDocument()
     expect(screen.getByText('200')).toBeInTheDocument()

@@ -1,13 +1,9 @@
 import { BR_IRPF_COLUMN_HEADERS, type IrpfAssetData, type IrpfResponse } from '../api/types'
+import { brlFormatter, quantityFormatter } from '../formatters'
 
 interface BrIrpfTableProps {
   data: IrpfResponse
 }
-
-const brlFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
 
 export function BrIrpfTable({ data }: BrIrpfTableProps) {
   if (data.length === 0) {
@@ -50,7 +46,7 @@ function BrIrpfRow({ row }: { row: IrpfAssetData }) {
   return (
     <tr>
       <td>{row.symbol}</td>
-      <td>{row.quantity}</td>
+      <td>{quantityFormatter.format(row.quantity!)}</td>
       <td>{brlFormatter.format(row.avgCostBrl!)}</td>
       <td>{brlFormatter.format(row.totalCostBrl!)}</td>
       <td>{brlFormatter.format(row.capitalGainsBrl!)}</td>

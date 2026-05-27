@@ -30,7 +30,7 @@ describe('IrpfTable', () => {
     expect(screen.getByText('MSFT')).toBeInTheDocument()
   })
 
-  it('renders quantity as plain number', () => {
+  it('renders quantity formatted via quantityFormatter', () => {
     render(<IrpfTable data={sampleData} />)
     expect(screen.getByText('12')).toBeInTheDocument()
     expect(screen.getByText('8')).toBeInTheDocument()
