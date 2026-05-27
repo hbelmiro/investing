@@ -619,6 +619,21 @@ class IrpfResourceTest {
     }
 
     @Test
+    void getUsStocksIrpf_preservesFullPrecisionForFractionalQuantities() {
+        csvGoogleSheetsClient.setCsv("Compras Ações US", "/csv/IrpfResource/us_buys_fractional_precision.csv");
+        csvGoogleSheetsClient.setCsv("Vendas Ações US", "/csv/IrpfResource/empty.csv");
+
+        List<IrpfAssetData> result = irpfResource.getUsStocksIrpf(2025);
+
+        IrpfAssetData msft = result.stream()
+                .filter(d -> d.symbol().equals("MSFT"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(msft.quantity()).isEqualByComparingTo(new BigDecimal("1.2437552"));
+    }
+
+    @Test
     void getAvailableYears_includesBrBuyDates() {
         csvGoogleSheetsClient.setCsv("Compras Ações BR", "/csv/IrpfResource/br_buys.csv");
         csvGoogleSheetsClient.setCsv("Compras FIIs", "/csv/IrpfResource/fii_buys.csv");

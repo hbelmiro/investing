@@ -101,7 +101,7 @@ public class DashboardResource {
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
 
-        BigDecimal amount = bought.subtract(sold).setScale(5, RoundingMode.HALF_UP);
+        BigDecimal amount = bought.subtract(sold);
 
         if (amount.compareTo(BigDecimal.ZERO) == 0) {
             return Optional.empty();
@@ -165,7 +165,7 @@ public class DashboardResource {
 
         static {
             PERCENT_FORMAT.setMaximumFractionDigits(2);
-            NUMBER_FORMAT.setMaximumFractionDigits(5);
+            NUMBER_FORMAT.setMaximumFractionDigits(20);
         }
 
         @Override
