@@ -42,7 +42,7 @@ describe('BrIrpfTable', () => {
 
   it('formats fractional quantity with comma as decimal separator', () => {
     const fractionalData: IrpfResponse = [
-      { symbol: 'PETR4', quantity: 1.2437552, avgCostBrl: 31.67, totalCostBrl: 3800.40, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
+      { symbol: 'PETR4', quantity: 1.2437552, avgCostBrl: 31.67, totalCostBrl: 3800.4, capitalGainsBrl: 0, totalCapitalGainsBrl: 0, dividendsGrossBrl: 0, dividendsTaxBrl: 0 },
     ]
     render(<BrIrpfTable data={fractionalData} />)
     expect(screen.getByText('1,2437552')).toBeInTheDocument()
