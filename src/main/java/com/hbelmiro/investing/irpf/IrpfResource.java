@@ -1,8 +1,13 @@
 package com.hbelmiro.investing.irpf;
 
 import com.hbelmiro.investing.Operation;
+import com.hbelmiro.investing.dividend.BrDividendReader;
 import com.hbelmiro.investing.dividend.Dividend;
 import com.hbelmiro.investing.dividend.UsDividendReader;
+import com.hbelmiro.investing.operation.reader.BrStocksBuyReader;
+import com.hbelmiro.investing.operation.reader.BrStocksSellReader;
+import com.hbelmiro.investing.operation.reader.FiiBuyReader;
+import com.hbelmiro.investing.operation.reader.FiiSellReader;
 import com.hbelmiro.investing.operation.reader.UsFixedIncomeBuyReader;
 import com.hbelmiro.investing.operation.reader.UsFixedIncomeSellReader;
 import com.hbelmiro.investing.operation.reader.UsReitsBuyReader;
@@ -27,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Path("/api/irpf")
@@ -54,6 +60,21 @@ public class IrpfResource {
     UsDividendReader usDividendReader;
 
     @Inject
+    BrStocksBuyReader brStocksBuyReader;
+
+    @Inject
+    BrStocksSellReader brStocksSellReader;
+
+    @Inject
+    FiiBuyReader fiiBuyReader;
+
+    @Inject
+    FiiSellReader fiiSellReader;
+
+    @Inject
+    BrDividendReader brDividendReader;
+
+    @Inject
     IrpfCalculator irpfCalculator;
 
     @Inject
@@ -67,6 +88,8 @@ public class IrpfResource {
         allBuys.addAll(usStocksBuyReader.read());
         allBuys.addAll(usFixedIncomeBuyReader.read());
         allBuys.addAll(usReitsBuyReader.read());
+        allBuys.addAll(brStocksBuyReader.read());
+        allBuys.addAll(fiiBuyReader.read());
 
         int firstYear = allBuys.stream()
                 .mapToInt(op -> op.getDate().getYear())
@@ -86,8 +109,7 @@ public class IrpfResource {
     @Path("us_stocks")
     @Produces(MediaType.APPLICATION_JSON)
     public List<IrpfAssetData> getUsStocksIrpf(@QueryParam("year") int year) {
-        LocalDate endOfYear = LocalDate.of(year, 12, 31);
-        MonetaryRounding rounding = Monetary.getDefaultRounding();
+        CurrencyConverter converter = new UsCurrencyConverter(ptaxService);
 
         List<Operation> allBuys = new ArrayList<>();
         allBuys.addAll(usStocksBuyReader.read());
@@ -103,6 +125,38 @@ public class IrpfResource {
         List<Dividend> allDividends = usDividendReader.read().stream()
                 .filter(d -> isValidSymbol(d.asset().symbol()))
                 .toList();
+
+        return calculateIrpf(allBuys, allSells, allDividends, year, converter, this::toUsAssetData);
+    }
+
+    @GET
+    @Path("br_stocks")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<IrpfAssetData> getBrStocksIrpf(@QueryParam("year") int year) {
+        CurrencyConverter converter = new BrCurrencyConverter();
+
+        List<Operation> allBuys = new ArrayList<>();
+        allBuys.addAll(brStocksBuyReader.read());
+        allBuys.addAll(fiiBuyReader.read());
+
+        List<Operation> allSellsRaw = new ArrayList<>();
+        allSellsRaw.addAll(brStocksSellReader.read());
+        allSellsRaw.addAll(fiiSellReader.read());
+        List<Operation> allSells = allSellsRaw.stream().filter(op -> isValidSymbol(op.getAsset().symbol())).toList();
+
+        List<Dividend> allDividends = brDividendReader.read().stream()
+                .filter(d -> isValidSymbol(d.asset().symbol()))
+                .toList();
+
+        return calculateIrpf(allBuys, allSells, allDividends, year, converter, this::toBrAssetData);
+    }
+
+    private List<IrpfAssetData> calculateIrpf(List<Operation> allBuys, List<Operation> allSells,
+                                               List<Dividend> allDividends, int year,
+                                               CurrencyConverter converter,
+                                               Function<SymbolResult, IrpfAssetData> toAssetData) {
+        LocalDate endOfYear = LocalDate.of(year, 12, 31);
+        MonetaryRounding rounding = Monetary.getDefaultRounding();
 
         Set<String> symbols = allBuys.stream()
                 .filter(op -> !op.getDate().isAfter(endOfYear))
@@ -126,14 +180,8 @@ public class IrpfResource {
                         .filter(d -> d.date().getYear() == year)
                         .toList();
 
-                CapitalGainsResult gainsResult = irpfCalculator.calculateCapitalGains(symbolBuys, symbolSells, year, ptaxService);
-                Money avgCostBrl = gainsResult.avgCostBrl().with(rounding);
-                Money avgCostUsd = gainsResult.avgCostUsd().with(rounding);
-                Money capitalGainsBrl = gainsResult.capitalGainsBrl().with(rounding);
-                Money totalCapitalGainsBrl = gainsResult.totalCapitalGainsBrl().with(rounding);
-                DividendsResult dividendsResult = irpfCalculator.calculateDividendsBrl(dividends, ptaxService);
-                Money dividendsGrossBrl = dividendsResult.grossBrl().with(rounding);
-                Money dividendsTaxBrl = dividendsResult.taxBrl().with(rounding);
+                CapitalGainsResult gainsResult = irpfCalculator.calculateCapitalGains(symbolBuys, symbolSells, year, converter);
+                DividendsResult dividendsResult = irpfCalculator.calculateDividendsBrl(dividends, converter);
 
                 BigDecimal totalBought = symbolBuys.stream()
                         .filter(op -> !op.getDate().isAfter(endOfYear))
@@ -147,24 +195,45 @@ public class IrpfResource {
                         .setScale(5, java.math.RoundingMode.HALF_UP)
                         .stripTrailingZeros();
 
+                Money capitalGainsBrl = gainsResult.capitalGainsBrl().with(rounding);
                 if (quantity.compareTo(BigDecimal.ZERO) == 0
                         && capitalGainsBrl.isZero() && dividends.isEmpty()) {
                     return null;
                 }
 
-                Money totalCostBrl = avgCostBrl.multiply(quantity).with(rounding);
-                Money totalCostUsd = avgCostUsd.multiply(quantity).with(rounding);
-
-                Money ptaxRate = avgCostUsd.isPositive()
-                        ? avgCostBrl.divide(avgCostUsd.getNumber())
-                        : Money.zero(MoneyUtil.BRL);
-
-                return new IrpfAssetData(symbol, quantity, avgCostBrl, totalCostBrl, avgCostUsd, totalCostUsd, ptaxRate, capitalGainsBrl, totalCapitalGainsBrl, dividendsGrossBrl, dividendsTaxBrl, null);
+                return toAssetData.apply(new SymbolResult(symbol, quantity, gainsResult, dividendsResult, rounding));
             } catch (RuntimeException e) {
                 String errorMessage = e.getMessage() != null ? e.getMessage() : e.toString();
                 return IrpfAssetData.error(symbol, errorMessage);
             }
         }).filter(Objects::nonNull).toList();
+    }
+
+    private IrpfAssetData toUsAssetData(SymbolResult r) {
+        Money avgCostBrl = r.gainsResult.avgCostBrl().with(r.rounding);
+        Money avgCostUsd = r.gainsResult.avgCostOriginal().with(r.rounding);
+        Money totalCostBrl = avgCostBrl.multiply(r.quantity).with(r.rounding);
+        Money totalCostUsd = avgCostUsd.multiply(r.quantity).with(r.rounding);
+        Money ptaxRate = avgCostUsd.isPositive()
+                ? avgCostBrl.divide(avgCostUsd.getNumber())
+                : Money.zero(MoneyUtil.BRL);
+
+        return new IrpfAssetData(r.symbol, r.quantity, avgCostBrl, totalCostBrl, avgCostUsd, totalCostUsd, ptaxRate,
+                r.gainsResult.capitalGainsBrl().with(r.rounding), r.gainsResult.totalCapitalGainsBrl().with(r.rounding),
+                r.dividendsResult.grossBrl().with(r.rounding), r.dividendsResult.taxBrl().with(r.rounding), null);
+    }
+
+    private IrpfAssetData toBrAssetData(SymbolResult r) {
+        Money avgCostBrl = r.gainsResult.avgCostBrl().with(r.rounding);
+        Money totalCostBrl = avgCostBrl.multiply(r.quantity).with(r.rounding);
+
+        return new IrpfAssetData(r.symbol, r.quantity, avgCostBrl, totalCostBrl, null, null, null,
+                r.gainsResult.capitalGainsBrl().with(r.rounding), r.gainsResult.totalCapitalGainsBrl().with(r.rounding),
+                r.dividendsResult.grossBrl().with(r.rounding), r.dividendsResult.taxBrl().with(r.rounding), null);
+    }
+
+    private record SymbolResult(String symbol, BigDecimal quantity, CapitalGainsResult gainsResult,
+                                DividendsResult dividendsResult, MonetaryRounding rounding) {
     }
 
     private void validateSymbolsHaveBuys(Set<String> buySymbols, List<Operation> allSells,

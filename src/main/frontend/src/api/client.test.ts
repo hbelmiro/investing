@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchStocks, fetchIrpfData, fetchIrpfYears } from './client'
+import { fetchStocks, fetchIrpfData, fetchBrIrpfData, fetchIrpfYears } from './client'
 import type { StocksResponse, IrpfResponse } from './types'
 
 describe('fetchStocks', () => {
@@ -48,7 +48,7 @@ describe('fetchStocks', () => {
 
 describe('fetchIrpfData', () => {
   const mockData: IrpfResponse = [
-    { symbol: 'AAPL', quantity: 12, avgCostBrl: 290.29, totalCostBrl: 3483.48, capitalGainsBrl: 328.23, dividendsGrossBrl: 4.53, dividendsTaxBrl: 0.30 },
+    { symbol: 'AAPL', quantity: 12, avgCostBrl: 290.29, totalCostBrl: 3483.48, capitalGainsBrl: 328.23, dividendsGrossBrl: 4.53, dividendsTaxBrl: .3 },
   ]
 
   beforeEach(() => {
@@ -85,6 +85,48 @@ describe('fetchIrpfData', () => {
     } as Response)
 
     await expect(fetchIrpfData(2025)).rejects.toThrow('Failed to fetch IRPF data: 500 Internal Server Error')
+  })
+})
+
+describe('fetchBrIrpfData', () => {
+  const mockData: IrpfResponse = [
+    { symbol: 'PETR4', quantity: 120, avgCostBrl: 31.67, totalCostBrl: 3800.40, capitalGainsBrl: 249.84, dividendsGrossBrl: 1.50, dividendsTaxBrl: 0 },
+  ]
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('fetches BR IRPF data for a given year and returns parsed data', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    } as Response)
+
+    const result = await fetchBrIrpfData(2025)
+    expect(result).toEqual(mockData)
+    expect(fetch).toHaveBeenCalledWith('/api/irpf/br_stocks?year=2025', { signal: undefined })
+  })
+
+  it('passes AbortSignal to fetch', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    } as Response)
+
+    const controller = new AbortController()
+    await fetchBrIrpfData(2025, controller.signal)
+    expect(fetch).toHaveBeenCalledWith('/api/irpf/br_stocks?year=2025', { signal: controller.signal })
+  })
+
+  it('throws on non-ok response', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    } as Response)
+
+    await expect(fetchBrIrpfData(2025)).rejects.toThrow('Failed to fetch BR IRPF data: 500 Internal Server Error')
   })
 })
 

@@ -82,10 +82,11 @@ class DefaultPtaxServiceTest {
     void getCotacaoCompraNoRateWithin7DaysThrowsException() {
         var stub = new StubBcbPtaxRestClient();
 
-        var service = new DefaultPtaxService(stub);
+        var ptaxService = new DefaultPtaxService(stub);
 
+        var queryDate = LocalDate.of(2025, 1, 15);
         assertThatExceptionOfType(PtaxRateNotFoundException.class)
-                .isThrownBy(() -> service.getCotacaoCompra(LocalDate.of(2025, 1, 15)))
+                .isThrownBy(() -> ptaxService.getCotacaoCompra(queryDate))
                 .withMessageContaining("2025-01-15");
     }
 
@@ -149,10 +150,11 @@ class DefaultPtaxServiceTest {
         var rate = new PtaxRate(new BigDecimal("6.2000"), new BigDecimal("6.2010"), "2025-01-08 13:06:00.000");
         stub.addResponse("'01-08-2025'", new BcbPtaxResponse(List.of(rate)));
 
-        var service = new DefaultPtaxService(stub);
+        var ptaxService = new DefaultPtaxService(stub);
 
+        var queryDate = LocalDate.of(2025, 1, 15);
         assertThatExceptionOfType(PtaxRateNotFoundException.class)
-                .isThrownBy(() -> service.getCotacaoCompra(LocalDate.of(2025, 1, 15)));
+                .isThrownBy(() -> ptaxService.getCotacaoCompra(queryDate));
     }
 
     @Test

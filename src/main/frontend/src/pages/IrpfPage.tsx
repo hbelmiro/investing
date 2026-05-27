@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { fetchIrpfData, fetchIrpfYears } from '../api/client'
+import { fetchBrIrpfData, fetchIrpfData, fetchIrpfYears } from '../api/client'
 import type { IrpfResponse } from '../api/types'
 import { IrpfTable } from '../components/IrpfTable'
+import { BrIrpfTable } from '../components/BrIrpfTable'
 
 const currentYear = new Date().getFullYear()
 
 export function IrpfPage() {
   const [years, setYears] = useState<number[]>([currentYear])
   const [year, setYear] = useState(currentYear)
-  const [data, setData] = useState<IrpfResponse | null>(null)
+  const [usData, setUsData] = useState<IrpfResponse | null>(null)
+  const [brData, setBrData] = useState<IrpfResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,9 +29,13 @@ export function IrpfPage() {
       setLoading(true)
       setError(null)
       try {
-        const result = await fetchIrpfData(year, abortController.signal)
+        const [usResult, brResult] = await Promise.all([
+          fetchIrpfData(year, abortController.signal),
+          fetchBrIrpfData(year, abortController.signal),
+        ])
         if (!abortController.signal.aborted) {
-          setData(result)
+          setUsData(usResult)
+          setBrData(brResult)
         }
       } catch (e) {
         if (!abortController.signal.aborted) {
@@ -63,7 +69,14 @@ export function IrpfPage() {
       </div>
       {loading && <p>Carregando...</p>}
       {error && <p className="error">Erro: {error}</p>}
-      {!loading && !error && data && <IrpfTable data={data} />}
+      {!loading && !error && usData && brData && (
+        <>
+          <h2>Ações US</h2>
+          <IrpfTable data={usData} />
+          <h2>Ações BR e FIIs</h2>
+          <BrIrpfTable data={brData} />
+        </>
+      )}
     </div>
   )
 }

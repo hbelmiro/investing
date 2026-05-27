@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @Path("/hello")
 public class FundamentusResource {
 
+    private static final String ERROR_PLACEHOLDER = "Error";
     private static final NumberFormat currencyFormatter = NumberFormat.getInstance(Locale.of("pt", "BR"));
 
     private static final List<String> tickers = List.of(
@@ -59,32 +60,32 @@ public class FundamentusResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
-        Map<String, Optional<Indicators>> map = new LinkedHashMap<>(tickers.size());
+        Map<String, Optional<Indicators>> map = LinkedHashMap.newLinkedHashMap(tickers.size());
 
         tickers.forEach(ticker -> {
             Optional<Indicators> indicators;
             try {
                 indicators = Optional.of(fundamentusClient.read(ticker));
-            } catch (Exception e) {
+            } catch (Exception _) {
                 indicators = Optional.empty();
             }
             map.put(ticker, indicators);
         });
 
         String lpa = map.values().stream()
-                             .map(indicators -> indicators.map(Indicators::lpa).map(currencyFormatter::format).orElse("Error"))
+                             .map(indicators -> indicators.map(Indicators::lpa).map(currencyFormatter::format).orElse(ERROR_PLACEHOLDER))
                              .collect(Collectors.joining(System.lineSeparator()));
 
         String dy = map.values().stream()
-                            .map(indicators -> indicators.map(Indicators::dividendYield).map(currencyFormatter::format).orElse("Error"))
+                            .map(indicators -> indicators.map(Indicators::dividendYield).map(currencyFormatter::format).orElse(ERROR_PLACEHOLDER))
                             .collect(Collectors.joining(System.lineSeparator()));
 
         String netWorth = map.values().stream()
-                             .map(indicators -> indicators.map(Indicators::netWorth).map(currencyFormatter::format).orElse("Error"))
+                             .map(indicators -> indicators.map(Indicators::netWorth).map(currencyFormatter::format).orElse(ERROR_PLACEHOLDER))
                              .collect(Collectors.joining(System.lineSeparator()));
 
         String shares = map.values().stream()
-                                  .map(indicators -> indicators.map(Indicators::shares).map(currencyFormatter::format).orElse("Error"))
+                                  .map(indicators -> indicators.map(Indicators::shares).map(currencyFormatter::format).orElse(ERROR_PLACEHOLDER))
                                   .collect(Collectors.joining(System.lineSeparator()));
 
         return """

@@ -25,7 +25,7 @@ public final class AveragePriceCalculator {
     public Money calculate(List<Operation> operations) {
         validate(operations);
 
-        Money totalPrice = Money.zero(operations.get(0).getPrice().getCurrency());
+        Money totalPrice = Money.zero(operations.getFirst().getPrice().getCurrency());
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         List<Operation> sortedOperations = operations.stream().sorted(Comparator.comparing(Operation::getDate)).toList();

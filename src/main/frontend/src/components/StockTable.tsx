@@ -1,7 +1,7 @@
 import { COLUMN_HEADERS, type StocksResponse } from '../api/types'
 
 interface StockTableProps {
-  data: StocksResponse
+  readonly data: StocksResponse
 }
 
 export function StockTable({ data }: StockTableProps) {
