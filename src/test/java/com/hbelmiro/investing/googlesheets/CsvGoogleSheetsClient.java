@@ -32,7 +32,7 @@ public class CsvGoogleSheetsClient implements GoogleSheetsClient {
     private List<List<Object>> readCsv(String csvPath) {
         try (InputStream inputStream = getClass().getResourceAsStream(csvPath)) {
             if (inputStream != null) {
-                return Arrays.stream(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).split(System.lineSeparator()))
+                return Arrays.stream(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).split("\\R"))
                         .filter(line -> !line.isEmpty())
                         .map(row -> {
                             String[] splitValues = row.split(";");

@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 @Path("/api/irpf")
 public class IrpfResource {
 
+    private static final ZoneId BRAZIL_ZONE = ZoneId.of("America/Sao_Paulo");
+
     @Inject
     UsStocksBuyReader usStocksBuyReader;
 
@@ -95,9 +97,9 @@ public class IrpfResource {
         int firstYear = allBuys.stream()
                 .mapToInt(op -> op.getDate().getYear())
                 .min()
-                .orElse(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear());
+                .orElse(LocalDate.now(BRAZIL_ZONE).getYear());
 
-        int currentYear = LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear();
+        int currentYear = LocalDate.now(BRAZIL_ZONE).getYear();
         firstYear = Math.min(firstYear, currentYear);
         List<Integer> years = new ArrayList<>();
         for (int y = firstYear; y <= currentYear; y++) {

@@ -324,7 +324,7 @@ class IrpfResourceTest {
         List<Integer> years = irpfResource.getAvailableYears();
 
         assertThat(years.getFirst()).isEqualTo(2024);
-        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.systemDefault()).getYear());
+        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear());
         assertThat(years).isSorted();
         for (int i = 1; i < years.size(); i++) {
             assertThat(years.get(i)).isEqualTo(years.get(i - 1) + 1);
@@ -626,6 +626,6 @@ class IrpfResourceTest {
         List<Integer> years = irpfResource.getAvailableYears();
 
         assertThat(years.getFirst()).isEqualTo(2024);
-        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.systemDefault()).getYear());
+        assertThat(years.getLast()).isEqualTo(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getYear());
     }
 }
