@@ -21,17 +21,11 @@ public class FundamentusClient {
             throw new UncheckedIOException(e);
         }
         Elements spans = document.select("span[class=txt]");
-        Element dySpan = spans.stream().filter(e -> "Div. Yield".equals(e.html())).findAny().orElseThrow();
-        String dyString = dySpan.parent().nextElementSibling().getElementsByClass("txt").html();
 
-        Element lpaSpan = spans.stream().filter(e -> "LPA".equals(e.html())).findAny().orElseThrow();
-        String lpaString = lpaSpan.parent().nextElementSibling().getElementsByClass("txt").html();
-
-        Element netWorthSpan = spans.stream().filter(e -> "Patrim. Líq".equals(e.html())).findAny().orElseThrow();
-        String netWorthString = netWorthSpan.parent().nextElementSibling().getElementsByClass("txt").html();
-
-        Element sharesSpan = spans.stream().filter(e -> "Nro. Ações".equals(e.html())).findAny().orElseThrow();
-        String sharesString = sharesSpan.parent().nextElementSibling().getElementsByClass("txt").html();
+        String dyString = readIndicatorValue(spans, "Div. Yield");
+        String lpaString = readIndicatorValue(spans, "LPA");
+        String netWorthString = readIndicatorValue(spans, "Patrim. Líq");
+        String sharesString = readIndicatorValue(spans, "Nro. Ações");
 
         BigDecimal dy = new BigDecimal(dyString.replace(',', '.').replace("%", "")).divide(new BigDecimal("100"));
         BigDecimal lpa = new BigDecimal(lpaString.replace(".", "").replace(',', '.'));
@@ -39,5 +33,18 @@ public class FundamentusClient {
         BigDecimal shares = new BigDecimal(sharesString.replace(".", "").replace(',', '.'));
 
         return new Indicators(dy, lpa, netWorth, shares);
+    }
+
+    private static String readIndicatorValue(Elements spans, String label) {
+        Element span = spans.stream().filter(e -> label.equals(e.html())).findAny().orElseThrow();
+        Element parent = span.parent();
+        if (parent == null) {
+            throw new IllegalStateException("No parent element found for indicator: " + label);
+        }
+        Element sibling = parent.nextElementSibling();
+        if (sibling == null) {
+            throw new IllegalStateException("No sibling element found for indicator: " + label);
+        }
+        return sibling.getElementsByClass("txt").html();
     }
 }
